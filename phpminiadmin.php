@@ -22,7 +22,7 @@
  date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.7.110429';
+ $VERSION='1.7.111025';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -108,7 +108,7 @@
       }elseif ($_REQUEST['dosht']){
        check_xss();do_sht();
       }elseif (!$_REQUEST['refresh'] || preg_match('/^select|show|explain|desc/i',$SQLq) ){
-       check_xss();do_sql($SQLq);#perform non-selet SQL only if not refresh (to avoid dangerous delete/drop)
+       check_xss();do_sql($SQLq);#perform non-select SQL only if not refresh (to avoid dangerous delete/drop)
       }
      }else{
         if ( $_REQUEST['refresh'] ){
@@ -177,7 +177,7 @@ function display_select($sth,$q){
  if ($is_sht){
    $abtn="&nbsp;<input type='submit' value='Export' onclick=\"sht('exp')\">
  <input type='submit' value='Drop' onclick=\"if(ays()){sht('drop')}else{return false}\">
- <input type='submit' value='Truncate' onclick=\"if(ays()){sht('tunc')}else{return false}\">
+ <input type='submit' value='Truncate' onclick=\"if(ays()){sht('trunc')}else{return false}\">
  <input type='submit' value='Optimize' onclick=\"sht('opt')\">
  <b>selected tables</b>";
    $sqldr.=$abtn."<input type='hidden' name='dosht' value=''>";
@@ -241,20 +241,20 @@ function print_header(){
 <head><title>phpMiniAdmin</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <style type="text/css">
-body{font-family:Arial,Helvetica,sans-serif;font-size:80%;padding:0px;margin:0px}
-th,td{padding:0px;margin:0px}
+body{font-family:Arial,sans-serif;font-size:80%;padding:0;margin:0}
+th,td{padding:0;margin:0}
 div{padding:3px}
 pre{font-size:125%}
-.inv{background-color:#006699;color:#FFFFFF}
-.inv a{color:#FFFFFF}
+.inv{background-color:#069;color:#FFF}
+.inv a{color:#FFF}
 table.res th, table.res td{padding:2px}
 table.res tr{vertical-align:top}
-tr.e{background-color:#CCCCCC}
-tr.o{background-color:#EEEEEE}
-tr.h{background-color:#9999CC}
-tr.s{background-color:#FFFF99}
-.err{color:#FF3333;font-weight:bold;text-align:center}
-.frm{width:400px;border:1px solid #999999;background-color:#eeeeee;text-align:left}
+tr.e{background-color:#CCC}
+tr.o{background-color:#EEE}
+tr.h{background-color:#99C}
+tr.s{background-color:#FF9}
+.err{color:#F33;font-weight:bold;text-align:center}
+.frm{width:400px;border:1px solid #999;background-color:#eee;text-align:left}
 .dot{border-bottom:1px dotted #000}
 </style>
 
@@ -343,7 +343,7 @@ function print_screen(){
 ?>
 
 <div class="dot" style="padding:0 0 5px 20px">
-SQL-query (or many queries separated by ";"):<br />
+SQL-query (or multiple queries separated by ";"):<br />
 <textarea name="q" cols="70" rows="10" style="width:98%"><?php echo $SQLq?></textarea><br/>
 <input type=submit name="GoSQL" value="Go" onclick="return chksql()" style="width:100px">&nbsp;&nbsp;
 <input type=button name="Clear" value=" Clear " onClick="document.DF.q.value=''" style="width:100px">
@@ -983,17 +983,19 @@ function do_one_sql($sql){
 
 function do_sht(){
  $cb=$_REQUEST['cb'];
+ if (!is_array($cb)) $cb=array();
  switch ($_REQUEST['dosht']){
   case 'exp':$_REQUEST['t']=join(",",$cb);print_export();exit;
   case 'drop':$sq='DROP TABLE';break;
   case 'trunc':$sq='TRUNCATE TABLE';break;
   case 'opt':$sq='OPTIMIZE TABLE';break;
  }
- if ($sq && is_array($cb)){
+ if ($sq){
+  $sql='';
   foreach($cb as $v){
    $sql.=$sq." $v;\n";
   }
-  do_sql($sql);
+  if ($sql) do_sql($sql);
  }
  do_sql('show tables');
 }
@@ -1015,14 +1017,14 @@ function qstr($s){
 function get_rand_str($len){
  $result='';
  $chars=array("A","B","C","D","E","F","a","b","c","d","e","f",0,1,2,3,4,5,6,7,8,9);
- for($i=0;$i<$len;$i++) $result.=$chars[rand(0,count($chars))];
+ for($i=0;$i<$len;$i++) $result.=$chars[rand(0,count($chars))-1];
  return $result;
 }
 
 function check_xss(){
  global $self;
  if ($_SESSION['XSS']!=trim($_REQUEST['XSS'])){
-  echo "XSS error. <a href='$self'>relogin to ppm</a>";
+  echo "XSS error. <a href='$self?XSS=".$_SESSION['XSS']."'>relogin to ppm</a>";
   exit;
  }
 }
