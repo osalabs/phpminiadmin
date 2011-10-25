@@ -1,0 +1,3 @@
+changes in phpMiniAdmin 1.7.110429
+
+- added: import/export to/from gzip compressed files (.gz)
