@@ -32,7 +32,7 @@
 
  session_start();
  if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
- $xurl='XSS='.$_SESSION['XSS'];
+ $xurl=null;
 
  ini_set('display_errors',1);  #TODO turn off before deploy
  error_reporting(E_ALL ^ E_NOTICE);
