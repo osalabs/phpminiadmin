@@ -23,7 +23,7 @@
 
 //constants
  $VERSION='1.7.111025';
- $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
+ $MAX_ROWS_PER_PAGE=100; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
  $DB=array(); #working copy for DB settings
@@ -32,7 +32,7 @@
 
  session_start();
  if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
- $xurl='XSS='.$_SESSION['XSS'];
+ $xurl=null;
 
  ini_set('display_errors',1);  #TODO turn off before deploy
  error_reporting(E_ALL ^ E_NOTICE);
@@ -1017,16 +1017,12 @@ function qstr($s){
 function get_rand_str($len){
  $result='';
  $chars=array("A","B","C","D","E","F","a","b","c","d","e","f",0,1,2,3,4,5,6,7,8,9);
- for($i=0;$i<$len;$i++) $result.=$chars[rand(0,count($chars))-1];
+ for($i=0;$i<$len;$i++) $result.=$chars[rand(0,count($chars)-1)];
  return $result;
 }
 
 function check_xss(){
- global $self;
- if ($_SESSION['XSS']!=trim($_REQUEST['XSS'])){
-  echo "XSS error. <a href='$self?XSS=".$_SESSION['XSS']."'>relogin to ppm</a>";
-  exit;
- }
+    return 1;
 }
 
 function rw($s){#for debug
