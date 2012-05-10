@@ -111,7 +111,8 @@
       }elseif ($_REQUEST['dosht']){
        check_xss();do_sht();
       }elseif (!$_REQUEST['refresh'] || preg_match('/^select|show|explain|desc/i',$SQLq) ){
-       check_xss();do_sql($SQLq);#perform non-select SQL only if not refresh (to avoid dangerous delete/drop)
+       if ($SQLq)check_xss();
+       do_sql($SQLq);#perform non-select SQL only if not refresh (to avoid dangerous delete/drop)
       }
      }else{
         if ( $_REQUEST['refresh'] ){
@@ -1111,6 +1112,7 @@ function get_rand_str($len){
 function check_xss(){
  global $self;
  if ($_SESSION['XSS']!=trim($_REQUEST['XSS'])){
+    unset($_SESSION['XSS']);
     header("location: $self");
     exit;
  }
