@@ -1,4 +1,4 @@
-changes in phpMiniAdmin 1.8.120510
+### changes in phpMiniAdmin 1.8.120510
 
 - fixed: Undefined offset in get_rand_str
 - fixed: automatic relogin on XSS error 
@@ -11,12 +11,12 @@ changes in phpMiniAdmin 1.8.120510
 - changed: moved from html 4.01 to html 5
 - changed: simplified settings form
 
-changes in phpMiniAdmin 1.7.111025
+### changes in phpMiniAdmin 1.7.111025
 
 - fixed: unable to relogin on XSS error
 - fixed: truncate button doesn't work
 - minor changes in text labels and css styles
 
-changes in phpMiniAdmin 1.7.110429
+### changes in phpMiniAdmin 1.7.110429
 
 - added: import/export to/from gzip compressed files (.gz)
