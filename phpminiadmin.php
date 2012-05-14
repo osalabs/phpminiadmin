@@ -24,7 +24,7 @@
  date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.8.120510';
+ $VERSION='1.8.120514';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -819,7 +819,7 @@ function do_export(){
 
 function do_export_table($t='',$isvar=0,$MAXI=838860){
  global $D;
- set_time_limit(600);
+ @set_time_limit(600);
 
  if($_REQUEST['s']){
   $sth=db_query("show create table `$t`");
@@ -949,7 +949,7 @@ function do_import(){
 
 // multiple SQL statements splitter
 function do_multi_sql($insql,$fname=''){
- set_time_limit(600);
+ @set_time_limit(600);
 
  $sql='';
  $ochar='';
