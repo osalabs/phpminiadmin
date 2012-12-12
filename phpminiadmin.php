@@ -38,7 +38,7 @@ if ( !function_exists('sys_get_temp_dir')) {
 	}
 }
 //constants
- $VERSION='1.8.120514';
+ $VERSION='1.8.121212';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
