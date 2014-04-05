@@ -354,6 +354,8 @@ function q_next(){
  $('q').value=ls[LSK+qcur];
 }
 function after_load(){
+ var p=document.DF.pwd;
+ if (p) p.focus();
  qcur=lsmax();
 }
 function logoff(){
@@ -385,7 +387,7 @@ function sht(f){
 </script>
 
 </head>
-<body onload="after_load();document.DF.pwd.focus();">
+<body onload="after_load()">
 <form method="post" name="DF" action="<?php echo $self?>" enctype="multipart/form-data">
 <input type="hidden" name="XSS" value="<?php echo $_SESSION['XSS']?>">
 <input type="hidden" name="refresh" value="">
