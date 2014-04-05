@@ -21,7 +21,7 @@
  'port'=>"",#optional
  'chset'=>"utf8",#optional, default charset
  );
- date_default_timezone_set('UTC');#required by PHP 5.1+
+if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
  $VERSION='1.9.140405';
@@ -849,7 +849,7 @@ function ex_hdr($ct,$fn){
 function ex_start(){
  global $ex_isgz,$ex_gz,$ex_tmpf;
  if ($ex_isgz){
-    $ex_tmpf=tempnam(sys_get_temp_dir(),'pma').'.gz';
+    $ex_tmpf=tmp_name().'.gz';
     if (!($ex_gz=gzopen($ex_tmpf,'wb9'))) die("Error trying to create gz tmp file");
  }
 }
@@ -866,6 +866,7 @@ function ex_end(){
  if ($ex_isgz){
     gzclose($ex_gz);
     readfile($ex_tmpf);
+    unlink($ex_tmpf);
  }
 }
 
@@ -920,7 +921,7 @@ function do_import(){
   $filename=$F['tmp_name'];
   $pi=pathinfo($F['name']);
   if ($pi['extension']!='sql'){//if not sql - assume .gz
-     $tmpf=tempnam(sys_get_temp_dir(),'pma');
+     $tmpf=tmp_name();
      if (($gz=gzopen($filename,'rb')) && ($tf=fopen($tmpf,'wb'))){
         while(!gzeof($gz)){
            if (fwrite($tf,gzread($gz,8192),8192)===FALSE){$err_msg='Error during gz file extraction to tmp file';break;}
@@ -1116,6 +1117,21 @@ function check_xss(){
 
 function rw($s){#for debug
  echo $s."<br>\n";
+}
+
+function tmp_name() {
+  if ( function_exists('sys_get_temp_dir')) return tempnam(sys_get_temp_dir(),'pma');
+
+  if( !($temp=getenv('TMP')) )
+    if( !($temp=getenv('TEMP')) )
+      if( !($temp=getenv('TMPDIR')) ) {
+        $temp=tempnam(__FILE__,'');
+        if (file_exists($temp)) {
+          unlink($temp);
+          $temp=dirname($temp);
+        }
+      }
+  return $temp ? tempnam($temp,'pma') : null;
 }
 
 ?>
