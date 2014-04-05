@@ -21,10 +21,24 @@
  'port'=>"",#optional
  'chset'=>"utf8",#optional, default charset
  );
+if (function_exists('date_default_timezone_set')) {
  date_default_timezone_set('UTC');#required by PHP 5.1+
-
+}
+if ( !function_exists('sys_get_temp_dir')) {
+ function sys_get_temp_dir() {
+		if( $temp=getenv('TMP') ) return $temp;
+		if( $temp=getenv('TEMP') ) return $temp;
+		if( $temp=getenv('TMPDIR') ) return $temp;
+		$temp=tempnam(__FILE__,'');
+		if (file_exists($temp)) {
+			unlink($temp);
+			return dirname($temp);
+		}
+		return null;
+	}
+}
 //constants
- $VERSION='1.8.120514';
+ $VERSION='1.8.121212';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);

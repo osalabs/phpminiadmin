@@ -1,3 +1,7 @@
+### changes in phpMiniAdmin 1.8.121212
+
+- added: minor php 4.x compatibility changes
+
 ### changes in phpMiniAdmin 1.8.120510
 
 - fixed: Undefined offset in get_rand_str
