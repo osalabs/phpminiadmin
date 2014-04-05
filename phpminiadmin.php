@@ -238,7 +238,13 @@ function display_select($sth,$q){
          ;
       }else{
        if (is_null($v)) $v="NULL";
-       $v=htmlspecialchars($v);
+       elseif (preg_match('/[\x00-\x09\x0B\x0C\x0E-\x1F]+/',$v)) { #all chars <32, except \n\r(0D0A)
+        $vl=strlen($v);$pf='';
+        if ($vl>16 && $fields_num>1){#show full dump if just one field
+          $v=substr($v, 0, 16);$pf='...';
+        }
+        $v='BINARY: '.chunk_split(strtoupper(bin2hex($v)),2,' ').$pf;
+       }else $v=htmlspecialchars($v);
       }
       if ($is_show_crt) $v="<pre>$v</pre>";
       $sqldr.="<td>$v".(!strlen($v)?"<br>":'')."</td>";
@@ -268,7 +274,7 @@ pre{font-size:125%}
 .inv a{color:#FFF}
 table.res{width:100%;border-collapse:collapse;}
 table.wa{width:auto}
-table.res th,table.res td{padding:2px;border:1px solid #fff}
+table.res th,table.res td{padding:2px;border:1px solid #fff;vertical-align: top}
 table.restr{vertical-align:top}
 tr.e{background-color:#CCC}
 tr.o{background-color:#EEE}

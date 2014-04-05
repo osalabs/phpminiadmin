@@ -27,6 +27,7 @@ For additional security you may edit phpminiadmin.php file and set some password
 - added: autofocus to login pwd field
 - added: some minor compatibility changes for PHP 4.x
 - changed: yellow row highlight removed if clicked again
+- changed: if field contains binary data (char codes < 32), only first 16 hex will be displayed (if you want to dump full content - select just one this field)
 
 ### changes in phpMiniAdmin 1.8.120510
 
