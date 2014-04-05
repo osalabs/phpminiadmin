@@ -792,7 +792,7 @@ function do_export(){
 
  if ($ct==1&&$_REQUEST['et']=='csv'){
   ex_hdr($ctp?$ctp:'text/csv',"$t[0].csv$aext");
-  if ($DB['chset']=='utf8') ex_end($BOM);
+  if ($DB['chset']=='utf8') ex_w($BOM);
 
   $sth=db_query("select * from `$t[0]`");
   $fn=mysql_num_fields($sth);
