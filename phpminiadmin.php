@@ -204,14 +204,14 @@ function display_select($sth,$q){
  $sqldr.=$headers;
  $swapper=false;
  while($row=mysql_fetch_row($sth)){
-   $sqldr.="<tr class='".$rc[$swp=!$swp]."' onmouseover='tmv(this)' onmouseout='tmo(this)' onclick='tc(this)'>";
+   $sqldr.="<tr class='".$rc[$swp=!$swp]."'>";
    for($i=0;$i<$fields_num;$i++){
       $v=$row[$i];$more='';
       if ($is_sht && $v){
          if ($i>0) break;
          $vq='`'.$v.'`';
          $url='?'.$xurl."&db=$dbn";
-         $v="<input type='checkbox' name='cb[]' value=\"$vq\"></td>"
+         $v="<input type='checkbox' name='cb[]' value=\"$vq\" onclick='tc(this.parentNode.parentNode)'></td>"
          ."<td><a href=\"$url&q=select+*+from+$vq\">$v</a></td>"
          ."<td>".$row[1]."</td>"
          ."<td align='right'>".$row[4]."</td>"
@@ -268,8 +268,9 @@ table.res th,table.res td{padding:2px;border:1px solid #fff}
 table.restr{vertical-align:top}
 tr.e{background-color:#CCC}
 tr.o{background-color:#EEE}
+tr.e:hover, tr.o:hover {background-color:#FF9}
+tr.s {background-color:#FF9}
 tr.h{background-color:#99C}
-tr.s{background-color:#FF9}
 .err{color:#F33;font-weight:bold;text-align:center}
 .frm{width:400px;border:1px solid #999;background-color:#eee;text-align:left}
 .frm label.l{width:100px;float:left}
@@ -313,16 +314,14 @@ function chksql(){
  }
  return true;
 }
-function tmv(tr){
- tr.sc=tr.className;
- tr.className='h';
-}
-function tmo(tr){
- tr.className=tr.sc;
-}
 function tc(tr){
- tr.className='s';
- tr.sc='s';
+ if (tr.className=='s')
+  tr.className=tr.sc;
+ else
+ {
+  tr.sc=tr.className;
+  tr.className='s';
+ }
 }
 function lschk(skip){
  if (!localStorage || !skip && !localStorage[LSKX]) return false;
@@ -377,7 +376,7 @@ function chkall(cab){
  var e=document.DF.elements;
  if (e!=null){
   var cl=e.length;
-  for (i=0;i<cl;i++){var m=e[i];if(m.checked!=null && m.type=="checkbox"){m.checked=cab.checked}}
+  for (i=0;i<cl;i++){var m=e[i];if(m.checked!=null && m.type=="checkbox"){m.checked=cab.checked;}}
  }
 }
 function sht(f){
