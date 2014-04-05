@@ -28,6 +28,7 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
+ $SHOW_D="SHOW DATABASES";
  $SHOW_T="SHOW TABLE STATUS";
  $DB=array(); #working copy for DB settings
 
@@ -116,12 +117,14 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
       }
      }else{
         if ( $_REQUEST['refresh'] ){
-           check_xss();do_sql('show databases');
-        }elseif ( preg_match('/^show\s+(?:databases|status|variables|process)/i',$SQLq) ){
+           check_xss();do_sql($SHOW_D);
+        }elseif ($_REQUEST['crdb']){
+          check_xss();do_sql('CREATE DATABASE `'.$_REQUEST['new_db'].'`');do_sql($SHOW_D);
+        }elseif ( preg_match('/^(?:show\s+(?:databases|status|variables|process)|create\s+database|grant\s+)/i',$SQLq) ){
            check_xss();do_sql($SQLq);
         }else{
            $err_msg="Select Database first";
-           if (!$SQLq) do_sql("show databases");
+           if (!$SQLq) do_sql($SHOW_D);
         }
      }
     }
@@ -176,8 +179,9 @@ function display_select($sth,$q){
 &nbsp;MySQL Server:
 &nbsp;&#183;<a href='$url&q=show+variables'>Show Configuration Variables</a>
 &nbsp;&#183;<a href='$url&q=show+status'>Show Statistics</a>
-&nbsp;&#183;<a href='$url&q=show+processlist'>Show Processlist</a>
-<br>";
+&nbsp;&#183;<a href='$url&q=show+processlist'>Show Processlist</a>";
+   if ($is_shd) $sqldr.="&nbsp;&#183;Create new database: <input type='text' name='new_db' placeholder='type db name here'> <input type='submit' name='crdb' value='Create'>";
+   $sqldr.="<br>";
    if ($is_sht) $sqldr.="&nbsp;Database:&nbsp;&#183;<a href='$url&q=show+table+status'>Show Table Status</a>";
    $sqldr.="</div>";
  }
@@ -228,7 +232,7 @@ function display_select($sth,$q){
       }elseif ($is_shd && $i==0 && $v){
          $url='?'.$xurl."&db=$v";
          $v="<a href=\"$url&q=SHOW+TABLE+STATUS\">$v</a></td>"
-         ."<td><a href=\"$url&q=show+create+database+`$v`\">sct</a></td>"
+         ."<td><a href=\"$url&q=show+create+database+`$v`\">scd</a></td>"
          ."<td><a href=\"$url&q=show+table+status\">status</a></td>"
          ."<td><a href=\"$url&q=show+triggers\">trig</a></td>"
          ;
@@ -575,11 +579,11 @@ function get_identity($dbh1=NULL){
 }
 
 function get_db_select($sel=''){
- global $DB;
+ global $DB,$SHOW_D;
  if (is_array($_SESSION['sql_sd']) && $_REQUEST['db']!='*'){//check cache
     $arr=$_SESSION['sql_sd'];
  }else{
-   $arr=db_array("show databases",NULL,1);
+   $arr=db_array($SHOW_D,NULL,1);
    if (!is_array($arr)){
       $arr=array( 0 => array('Database' => $DB['db']) );
     }
@@ -1072,6 +1076,7 @@ function do_sht(){
  global $SHOW_T;
  $cb=$_REQUEST['cb'];
  if (!is_array($cb)) $cb=array();
+ $sql='';
  switch ($_REQUEST['dosht']){
   case 'exp':$_REQUEST['t']=join(",",$cb);print_export();exit;
   case 'drop':$sq='DROP TABLE';break;
@@ -1079,12 +1084,11 @@ function do_sht(){
   case 'opt':$sq='OPTIMIZE TABLE';break;
  }
  if ($sq){
-  $sql='';
   foreach($cb as $v){
    $sql.=$sq." $v;\n";
   }
-  if ($sql) do_sql($sql);
  }
+ if ($sql) do_sql($sql);
  do_sql($SHOW_T);
 }
 
