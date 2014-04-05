@@ -1,11 +1,11 @@
 ![](http://phpminiadmin.sourceforge.net/img/scr_select_from_table.gif)
 
-[other screenshots is here](http://sourceforge.net/project/screenshots.php?group_id=181023)
+[other screenshots are here](http://sourceforge.net/project/screenshots.php?group_id=181023)
 
 ## How to Install
 - Download phpminiadmin.php file
 - Copy/Upload it to your webserver public directory (www or public_html or whatever...)
-- Open in your browser _http://yoursite.com/phpminiadmin.php_
+- Open in your browser http:// yoursite.com/phpminiadmin.php
 
 For additional security you may edit phpminiadmin.php file and set some password (see $ACCESS_PWD variable)
 
