@@ -385,7 +385,7 @@ function sht(f){
 </script>
 
 </head>
-<body onload="after_load()">
+<body onload="after_load();document.DF.pwd.focus();">
 <form method="post" name="DF" action="<?php echo $self?>" enctype="multipart/form-data">
 <input type="hidden" name="XSS" value="<?php echo $_SESSION['XSS']?>">
 <input type="hidden" name="refresh" value="">
