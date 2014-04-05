@@ -388,27 +388,28 @@ function sht(f){
 
 </head>
 <body onload="after_load()">
-<form method="post" name="DF" action="<?php echo $self?>" enctype="multipart/form-data">
-<input type="hidden" name="XSS" value="<?php echo $_SESSION['XSS']?>">
+<form method="post" name="DF" action="<?php eo($self)?>" enctype="multipart/form-data">
+<input type="hidden" name="XSS" value="<?php eo($_SESSION['XSS'])?>">
 <input type="hidden" name="refresh" value="">
 <input type="hidden" name="p" value="">
 
 <div class="inv">
-<a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php echo $VERSION?></b></a>
+<a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
 <?php if ($_SESSION['is_logged'] && $dbh){ ?>
- | <a href="?<?php echo $xurl?>&q=show+databases">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option><?php echo get_db_select($dbn)?></select>
-<?php if($dbn){ $z=" &#183; <a href='$self?$xurl&db=$dbn"; ?>
+ | <a href="?<?php eo($xurl)?>&q=show+databases">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
+<?php echo get_db_select($dbn)?></select>
+<?php if($dbn){ $z=" &#183; <a href='".hs($self."?$xurl&db=$dbn"); ?>
 <?php echo $z.'&q='.urlencode($SHOW_T)?>'>show tables</a>
 <?php echo $z?>&shex=1'>export</a>
 <?php echo $z?>&shim=1'>import</a>
 <?php } ?>
  | <a href="?showcfg=1">Settings</a>
 <?php } ?>
-<?php if ($GLOBALS['ACCESS_PWD']){?> | <a href="?<?php echo $xurl?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
+<?php if ($GLOBALS['ACCESS_PWD']){?> | <a href="?<?php eo($xurl)?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
  | <a href="?phpinfo=1">phpinfo</a>
 </div>
 
-<div class="err"><?php echo $err_msg?></div>
+<div class="err"><?php eo($err_msg)?></div>
 
 <?php
 }
@@ -426,14 +427,14 @@ function print_screen(){
 
 <div class="dot" style="padding:0 0 5px 20px">
 SQL-query (or multiple queries separated by ";"):&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
-<textarea id="q" name="q" cols="70" rows="10" style="width:98%"><?php echo $SQLq?></textarea><br>
+<textarea id="q" name="q" cols="70" rows="10" style="width:98%"><?php eo($SQLq)?></textarea><br>
 <input type="submit" name="GoSQL" value="Go" onclick="return chksql()" style="width:100px">&nbsp;&nbsp;
 <input type="button" name="Clear" value=" Clear " onclick="document.DF.q.value=''" style="width:100px">
 </div>
 
 <div class="dot" style="padding:5px 0 5px 20px">
-Records: <b><?php echo $reccount?></b> in <b><?php echo $time_all?></b> sec<br>
-<b><?php echo $out_message?></b>
+Records: <b><?php eo($reccount)?></b> in <b><?php eo($time_all)?></b> sec<br>
+<b><?php eo($out_message)?></b>
 </div>
 <div class="sqldr">
 <?php echo $nav.$sqldr.$nav; ?>
@@ -473,18 +474,18 @@ function print_cfg(){
 <center>
 <h3>DB Connection Settings</h3>
 <div class="frm">
-<label class="l">DB user name:</label><input type="text" name="v[user]" value="<?php echo $DB['user']?>"><br>
+<label class="l">DB user name:</label><input type="text" name="v[user]" value="<?php eo($DB['user'])?>"><br>
 <label class="l">Password:</label><input type="password" name="v[pwd]" value=""><br>
 <div style="text-align:right"><a href="#" class="ajax" onclick="cfg_toggle()">advanced settings</a></div>
 <div id="cfg-adv" style="display:none;">
-<label class="l">DB name:</label><input type="text" name="v[db]" value="<?php echo $DB['db']?>"><br>
-<label class="l">MySQL host:</label><input type="text" name="v[host]" value="<?php echo $DB['host']?>"> port: <input type="text" name="v[port]" value="<?php echo $DB['port']?>" size="4"><br>
+<label class="l">DB name:</label><input type="text" name="v[db]" value="<?php eo($DB['db'])?>"><br>
+<label class="l">MySQL host:</label><input type="text" name="v[host]" value="<?php eo($DB['host'])?>"> port: <input type="text" name="v[port]" value="<?php eo($DB['port'])?>" size="4"><br>
 <label class="l">Charset:</label><select name="v[chset]"><option value="">- default -</option><?php echo chset_select($DB['chset'])?></select><br>
 <br><input type="checkbox" name="rmb" value="1" checked> Remember in cookies for 30 days
 </div>
 <center>
 <input type="hidden" name="savecfg" value="1">
-<input type="submit" value=" Apply "><input type="button" value=" Cancel " onclick="window.location='<?php echo $self?>'">
+<input type="submit" value=" Apply "><input type="button" value=" Cancel " onclick="window.location='<?php eo($self)?>'">
 </center>
 </div>
 </center>
@@ -743,7 +744,7 @@ function print_export(){
  print_header();
 ?>
 <center>
-<h3>Export <?php echo $l?></h3>
+<h3>Export <?php eo($l)?></h3>
 <div class="frm">
 <input type="checkbox" name="s" value="1" checked> Structure<br>
 <input type="checkbox" name="d" value="1" checked> Data<br><br>
@@ -759,8 +760,8 @@ function print_export(){
 <div><label><input type="checkbox" name="gz" value="1"> compress as .gz</label></div>
 <br>
 <input type="hidden" name="doex" value="1">
-<input type="hidden" name="t" value="<?php echo $t?>">
-<input type="submit" value=" Download "><input type="button" value=" Cancel " onclick="window.location='<?php echo $self.'?'.$xurl.'&db='.$DB['db']?>'">
+<input type="hidden" name="t" value="<?php eo($t)?>">
+<input type="submit" value=" Download "><input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
 </div>
 </center>
 <?php
@@ -881,7 +882,7 @@ function print_import(){
 <div class="frm">
 <b>.sql</b> or <b>.gz</b> file: <input type="file" name="file1" value="" size=40><br>
 <input type="hidden" name="doim" value="1">
-<input type="submit" value=" Upload and Import " onclick="return ays()"><input type="button" value=" Cancel " onclick="window.location='<?php echo $self.'?'.$xurl.'&db='.$DB['db']?>'">
+<input type="submit" value=" Upload and Import " onclick="return ays()"><input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
 </div>
 <br><br><br>
 <!--
@@ -905,7 +906,7 @@ Import into:<br>
 <input type="radio" name="tt" value="2"> create new table with name <input type="text" name="tn" value="" size="20">
 <br><br>
 <input type="hidden" name="doimcsv" value="1">
-<input type="submit" value=" Upload and Import " onclick="return ays()"><input type="button" value=" Cancel " onclick="window.location='<?php echo $self?>'">
+<input type="submit" value=" Upload and Import " onclick="return ays()"><input type="button" value=" Cancel " onclick="window.location='<?php eo($self)?>'">
 </div>
 -->
 </center>
@@ -1118,7 +1119,7 @@ function check_xss(){
 }
 
 function rw($s){#for debug
- echo $s."<br>\n";
+ echo hs($s)."<br>\n";
 }
 
 function tmp_name() {
@@ -1136,4 +1137,10 @@ function tmp_name() {
   return $temp ? tempnam($temp,'pma') : null;
 }
 
+function hs($s){
+  return htmlspecialchars($s, ENT_COMPAT|ENT_HTML401,'UTF-8');
+}
+function eo($s){//echo+escape
+  echo hs($s);
+}
 ?>
