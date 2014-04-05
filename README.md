@@ -1,5 +1,6 @@
 ![](http://phpminiadmin.sourceforge.net/img/scr_select_from_table.gif)
-[other screenshots](http://sourceforge.net/project/screenshots.php?group_id=181023)
+
+[other screenshots is here](http://sourceforge.net/project/screenshots.php?group_id=181023)
 
 ## How to Install
 - Download phpminiadmin.php file
