@@ -1,7 +1,7 @@
 <?php
 /*
  PHP Mini MySQL Admin
- (c) 2004-2012 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
+ (c) 2004-2014 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
 
  Light standalone PHP script for quick and easy access MySQL databases.
  http://phpminiadmin.sourceforge.net
@@ -24,7 +24,7 @@
  date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.8.120514';
+ $VERSION='1.9.140405';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -204,14 +204,14 @@ function display_select($sth,$q){
  $sqldr.=$headers;
  $swapper=false;
  while($row=mysql_fetch_row($sth)){
-   $sqldr.="<tr class='".$rc[$swp=!$swp]."'>";
+   $sqldr.="<tr class='".$rc[$swp=!$swp]."' onclick='tc(this)'>";
    for($i=0;$i<$fields_num;$i++){
       $v=$row[$i];$more='';
       if ($is_sht && $v){
          if ($i>0) break;
          $vq='`'.$v.'`';
          $url='?'.$xurl."&db=$dbn";
-         $v="<input type='checkbox' name='cb[]' value=\"$vq\" onclick='tc(this.parentNode.parentNode)'></td>"
+         $v="<input type='checkbox' name='cb[]' value=\"$vq\"></td>"
          ."<td><a href=\"$url&q=select+*+from+$vq\">$v</a></td>"
          ."<td>".$row[1]."</td>"
          ."<td align='right'>".$row[4]."</td>"
@@ -269,8 +269,8 @@ table.restr{vertical-align:top}
 tr.e{background-color:#CCC}
 tr.o{background-color:#EEE}
 tr.e:hover, tr.o:hover {background-color:#FF9}
-tr.s {background-color:#FF9}
 tr.h{background-color:#99C}
+tr.s{background-color:#FF9}
 .err{color:#F33;font-weight:bold;text-align:center}
 .frm{width:400px;border:1px solid #999;background-color:#eee;text-align:left}
 .frm label.l{width:100px;float:left}
@@ -315,11 +315,10 @@ function chksql(){
  return true;
 }
 function tc(tr){
- if (tr.className=='s')
-  tr.className=tr.sc;
- else
- {
-  tr.sc=tr.className;
+ if (tr.className=='s'){
+  tr.className=tr.classNameX;
+ }else{
+  tr.classNameX=tr.className;
   tr.className='s';
  }
 }
@@ -376,7 +375,7 @@ function chkall(cab){
  var e=document.DF.elements;
  if (e!=null){
   var cl=e.length;
-  for (i=0;i<cl;i++){var m=e[i];if(m.checked!=null && m.type=="checkbox"){m.checked=cab.checked;}}
+  for (i=0;i<cl;i++){var m=e[i];if(m.checked!=null && m.type=="checkbox"){m.checked=cab.checked}}
  }
 }
 function sht(f){
@@ -444,9 +443,7 @@ Records: <b><?php echo $reccount?></b> in <b><?php echo $time_all?></b> sec<br>
 function print_footer(){
 ?>
 </form>
-<div class="ft">
-&copy; 2004-2012 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a>
-</div>
+<div class="ft">&copy; 2004-2014 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
 </body></html>
 <?php
 }
