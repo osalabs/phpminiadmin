@@ -24,7 +24,7 @@
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.140405';
+ $VERSION='1.9.141219';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -180,7 +180,7 @@ function display_select($sth,$q){
 &nbsp;&#183;<a href='$url&q=show+variables'>Show Configuration Variables</a>
 &nbsp;&#183;<a href='$url&q=show+status'>Show Statistics</a>
 &nbsp;&#183;<a href='$url&q=show+processlist'>Show Processlist</a>";
-   if ($is_shd) $sqldr.="&nbsp;&#183;Create new database: <input type='text' name='new_db' placeholder='type db name here'> <input type='submit' name='crdb' value='Create'>";
+   if ($is_shd) $sqldr.="&nbsp;&#183;<label>Create new database: <input type='text' name='new_db' placeholder='type db name here'></label> <input type='submit' name='crdb' value='Create'>";
    $sqldr.="<br>";
    if ($is_sht) $sqldr.="&nbsp;Database:&nbsp;&#183;<a href='$url&q=show+table+status'>Show Table Status</a>";
    $sqldr.="</div>";
@@ -283,7 +283,7 @@ tr.h{background-color:#99C}
 tr.s{background-color:#FF9}
 .err{color:#F33;font-weight:bold;text-align:center}
 .frm{width:400px;border:1px solid #999;background-color:#eee;text-align:left}
-.frm label.l{width:100px;float:left}
+.frm label .l{width:100px;float:left}
 .dot{border-bottom:1px dotted #000}
 .ajax{text-decoration: none;border-bottom: 1px dashed;}
 .qnav{width:30px}
@@ -425,7 +425,7 @@ function sht(f){
 }
 
 function print_screen(){
- global $out_message, $SQLq, $err_msg, $reccount, $time_all, $sqldr, $page, $MAX_ROWS_PER_PAGE, $is_limited_sql;
+ global $out_message, $SQLq, $err_msg, $reccount, $time_all, $sqldr, $page, $MAX_ROWS_PER_PAGE, $is_limited_sql, $last_count;
 
  $nav='';
  if ($is_limited_sql && ($page || $reccount>=$MAX_ROWS_PER_PAGE) ){
@@ -436,14 +436,14 @@ function print_screen(){
 ?>
 
 <div class="dot" style="padding:0 0 5px 20px">
-SQL-query (or multiple queries separated by ";"):&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
+<label for="q">SQL-query (or multiple queries separated by ";"):</label>&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
 <textarea id="q" name="q" cols="70" rows="10" style="width:98%"><?php eo($SQLq)?></textarea><br>
 <input type="submit" name="GoSQL" value="Go" onclick="return chksql()" style="width:100px">&nbsp;&nbsp;
 <input type="button" name="Clear" value=" Clear " onclick="document.DF.q.value=''" style="width:100px">
 </div>
 
 <div class="dot" style="padding:5px 0 5px 20px">
-Records: <b><?php eo($reccount)?></b> in <b><?php eo($time_all)?></b> sec<br>
+Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_count){eo(' out of '.$last_count);}?></b> in <b><?php eo($time_all)?></b> sec<br>
 <b><?php eo($out_message)?></b>
 </div>
 <div class="sqldr">
@@ -467,7 +467,7 @@ function print_login(){
 <center>
 <h3>Access protected by password</h3>
 <div style="width:400px;border:1px solid #999999;background-color:#eeeeee">
-Password: <input type="password" name="pwd" value="">
+<label>Password: <input type="password" name="pwd" value=""></label>
 <input type="hidden" name="login" value="1">
 <input type="submit" value=" Login ">
 </div>
@@ -484,14 +484,14 @@ function print_cfg(){
 <center>
 <h3>DB Connection Settings</h3>
 <div class="frm">
-<label class="l">DB user name:</label><input type="text" name="v[user]" value="<?php eo($DB['user'])?>"><br>
-<label class="l">Password:</label><input type="password" name="v[pwd]" value=""><br>
+<label><div class="l">DB user name:</div><input type="text" name="v[user]" value="<?php eo($DB['user'])?>"></label><br>
+<label><div class="l">Password:</div><input type="password" name="v[pwd]" value=""></label><br>
 <div style="text-align:right"><a href="#" class="ajax" onclick="cfg_toggle()">advanced settings</a></div>
 <div id="cfg-adv" style="display:none;">
-<label class="l">DB name:</label><input type="text" name="v[db]" value="<?php eo($DB['db'])?>"><br>
-<label class="l">MySQL host:</label><input type="text" name="v[host]" value="<?php eo($DB['host'])?>"> port: <input type="text" name="v[port]" value="<?php eo($DB['port'])?>" size="4"><br>
-<label class="l">Charset:</label><select name="v[chset]"><option value="">- default -</option><?php echo chset_select($DB['chset'])?></select><br>
-<br><input type="checkbox" name="rmb" value="1" checked> Remember in cookies for 30 days
+<label><div class="l">DB name:</div><input type="text" name="v[db]" value="<?php eo($DB['db'])?>"></label><br>
+<label><div class="l">MySQL host:</div><input type="text" name="v[host]" value="<?php eo($DB['host'])?>"></label> <label>port: <input type="text" name="v[port]" value="<?php eo($DB['port'])?>" size="4"></label><br>
+<label><div class="l">Charset:</div><select name="v[chset]"><option value="">- default -</option><?php echo chset_select($DB['chset'])?></select></label><br>
+<br><label for ="rmb"><input type="checkbox" name="rmb" id="rmb" value="1" checked> Remember in cookies for 30 days</label>
 </div>
 <center>
 <input type="hidden" name="savecfg" value="1">
@@ -1062,12 +1062,17 @@ function get_close_char($str, $pos, $ochar){
 }
 
 function do_one_sql($sql){
- global $last_sth,$last_sql,$MAX_ROWS_PER_PAGE,$page,$is_limited_sql;
+ global $last_sth,$last_sql,$MAX_ROWS_PER_PAGE,$page,$is_limited_sql, $last_count;
  $sql=trim($sql);
  $sql=preg_replace("/;$/","",$sql);
  if ($sql){
     $last_sql=$sql;$is_limited_sql=0;
+    $last_count=NULL;
     if (preg_match("/^select/i",$sql) && !preg_match("/limit +\d+/i", $sql)){
+       #get total count
+       $sql1='select count(*) from ('.$sql.') ___count_table';
+       $last_count=db_value($sql1);
+
        $offset=$page*$MAX_ROWS_PER_PAGE;
        $sql.=" LIMIT $offset,$MAX_ROWS_PER_PAGE";
        $is_limited_sql=1;

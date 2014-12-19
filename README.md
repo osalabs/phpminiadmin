@@ -19,6 +19,11 @@ For additional security you may edit phpminiadmin.php file and set some password
 - [My website](http://osalabs.com)
 
 ## Change Log
+### changes in phpMiniAdmin 1.9.141219
+
+- added: total count of records displayed for selects with pagination (example: 50 out of 104)
+- fixed: labels on forms, so inputs can be correctly narrated for blind users
+
 ### changes in phpMiniAdmin 1.9.140405
 
 - fixed: couple low risk XSS vulnerabilities
