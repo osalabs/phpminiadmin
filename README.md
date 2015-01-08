@@ -9,6 +9,13 @@
 
 For additional security you may edit phpminiadmin.php file and set some password (see $ACCESS_PWD variable)
 
+## Config file
+
+You can also create phpminiconfig.php in the same directory as phpminiadmin.php with database credentials or password.
+This way you can easily install future releases of phpminiadmin.php
+
+See phpminiconfig.sample.php for an example.
+
 ## Links
 - [Screenshots](http://sourceforge.net/project/screenshots.php?group_id=181023)
 - [Live demo](http://phpminiadmin.sourceforge.net/phpminiadmin.php) (pwd: pmaiscool)
@@ -24,6 +31,7 @@ For additional security you may edit phpminiadmin.php file and set some password
 - httponly cookies so your plain password cannot be stolen by javascript
 - export disables foreign key checks
 - ask for super privilege(otherwise you get a error on import)
+- added support for a config file with credentials
 
 ### changes in phpMiniAdmin 1.9.141219
 

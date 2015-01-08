@@ -21,6 +21,7 @@
  'port'=>"",#optional
  'chset'=>"utf8",#optional, default charset
  );
+file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read from config (easier to update)
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
