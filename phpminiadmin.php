@@ -24,7 +24,7 @@
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.141219';
+ $VERSION='1.9.150108';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -34,6 +34,7 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
 
  $self=$_SERVER['PHP_SELF'];
 
+ session_set_cookie_params(0, null, null, false, true);
  session_start();
  if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
  $xurl='XSS='.$_SESSION['XSS'];
@@ -705,21 +706,24 @@ function savecfg(){
 
  if ($_REQUEST['rmb']){
     $tm=time()+60*60*24*30;
-    setcookie("conn[db]",  $v['db'],$tm);
-    setcookie("conn[user]",$v['user'],$tm);
-    setcookie("conn[pwd]", $v['pwd'],$tm);
-    setcookie("conn[host]",$v['host'],$tm);
-    setcookie("conn[port]",$v['port'],$tm);
-    setcookie("conn[chset]",$v['chset'],$tm);
+    newcookie("conn[db]",  $v['db'],$tm);
+    newcookie("conn[user]",$v['user'],$tm);
+    newcookie("conn[pwd]", $v['pwd'],$tm);
+    newcookie("conn[host]",$v['host'],$tm);
+    newcookie("conn[port]",$v['port'],$tm);
+    newcookie("conn[chset]",$v['chset'],$tm);
  }else{
-    setcookie("conn[db]",  FALSE,-1);
-    setcookie("conn[user]",FALSE,-1);
-    setcookie("conn[pwd]", FALSE,-1);
-    setcookie("conn[host]",FALSE,-1);
-    setcookie("conn[port]",FALSE,-1);
-    setcookie("conn[chset]",FALSE,-1);
+    newcookie("conn[db]",  FALSE,-1);
+    newcookie("conn[user]",FALSE,-1);
+    newcookie("conn[pwd]", FALSE,-1);
+    newcookie("conn[host]",FALSE,-1);
+    newcookie("conn[port]",FALSE,-1);
+    newcookie("conn[chset]",FALSE,-1);
  }
 }
+
+// Allow httponly cookies, or the password is stored plain text in a cookie
+function newcookie($n,$v,$e){$x;return setcookie($n,$v,$e,$x,$x,!!$x,!$x);}
 
 //during login only - from cookies or use defaults;
 function loadcfg(){
