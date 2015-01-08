@@ -21,7 +21,9 @@ For additional security you may edit phpminiadmin.php file and set some password
 ## Change Log
 ### changes in phpMiniAdmin 1.9.150108
 
-- allow httponly cookies so your plain password cannot be stolen by any javascript
+- httponly cookies so your plain password cannot be stolen by javascript
+- export disables foreign key checks
+- ask for super privilege(otherwise you get a error on import)
 
 ### changes in phpMiniAdmin 1.9.141219
 

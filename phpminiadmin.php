@@ -771,6 +771,7 @@ function print_export(){
 <?php }?>
 </div>
 <br>
+<div><label><input type="checkbox" name="sp" value="1"> import has super privileges</label></div>
 <div><label><input type="checkbox" name="gz" value="1"> compress as .gz</label></div>
 <br>
 <input type="hidden" name="doex" value="1">
@@ -794,6 +795,7 @@ function do_export(){
  if(!$MAXI)$MAXI=838860;
  $aext='';$ctp='';
 
+ $ex_super=($_REQUEST['sp'])?1:0;
  $ex_isgz=($_REQUEST['gz'])?1:0;
  if ($ex_isgz) {
     $aext='.gz';$ctp='application/x-gzip';
@@ -818,13 +820,16 @@ function do_export(){
 
  ex_hdr($ctp?$ctp:'text/plain',"$DB[db]".(($ct==1&&$t[0])?".$t[0]":(($ct>1)?'.'.$ct.'tables':'')).".sql$aext");
  ex_w("-- phpMiniAdmin dump $VERSION$D-- Datetime: ".date('Y-m-d H:i:s')."$D-- Host: $DB[host]$D-- Database: $DB[db]$D$D");
- ex_w("/*!40030 SET NAMES $DB[chset] */;$D/*!40030 SET GLOBAL max_allowed_packet=16777216 */;$D$D");
+ ex_w("/*!40030 SET NAMES $DB[chset] */;$D");
+ $ex_super && ex_w("/*!40030 SET GLOBAL max_allowed_packet=16777216 */;$D$D");
+ ex_w("/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;$D$D");
 
  $sth=db_query("show tables from `$DB[db]`");
  while($row=mysql_fetch_row($sth)){
    if (!$rt||array_key_exists($row[0],$th)) do_export_table($row[0],1,$MAXI);
  }
 
+ ex_w("/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;$D$D");
  ex_w("$D-- phpMiniAdmin dump end$D");
  ex_end();
  exit;
