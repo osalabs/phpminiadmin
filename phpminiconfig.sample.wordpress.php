@@ -17,11 +17,11 @@ $config = dirname(__FILE__).'/wp-config.php';
 // Read config file and punt in database definition
 function wp_c($config, &$DBDEF) {
     // Read Wordpress configuration
-    if (!is_readable($config)) {return true;}
+    if (!is_readable($config)) {return false;}
 
     // Find database properties
     $match=array();$regexp="#\(\s*['\"]DB_(USER|NAME|HOST|PASSWORD|CHARSET)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*\);#";
-    if (!preg_match_all($regexp, implode('', file($config)), $match)) {return true;}
+    if (!preg_match_all($regexp, implode('', file($config)), $match)) {return false;}
 
     // Create connection array
     $keys = array_combine($match[1], $match[2]);

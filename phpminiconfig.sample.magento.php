@@ -17,12 +17,12 @@ $config = dirname(__FILE__).'/app/etc/local.xml';
 // Read config file and punt in database definition
 function mo_c($config, &$DBDEF) {
     // Read Magento configuration
-    if (!is_readable($config)) {return true;}
+    if (!is_readable($config)) {return false;}
 
     // Find database properties
     $regkeys='host|username|password|dbname|initStatements';
     $match=array();$regexp="#<({$regkeys})>(<!\[CDATA\[)?([^\]<]*)(\]\]>)?</({$regkeys})>#";
-    if (!preg_match_all($regexp, preg_replace("#^.*<connection>\s*([\s\S]+)\s*</connection>.*$#s", "\\1", implode('', file($config))), $match)) {return true;}
+    if (!preg_match_all($regexp, preg_replace("#^.*<connection>\s*([\s\S]+)\s*</connection>.*$#s", "\\1", implode('', file($config))), $match)) {return false;}
 
     // Create connection array
     $keys = array_combine($match[1], $match[3]);
