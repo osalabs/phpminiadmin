@@ -17,6 +17,7 @@ This way you can easily install future releases of phpminiadmin.php
 - See phpminiconfig.sample.php for an empty example
 - See phpminiconfig.sample.magento.php to read Magento its app/etc/local.xml ($ACCESS_PWD is required)
 - See phpminiconfig.sample.wordpress.php to read Wordpress its wp-config.php ($ACCESS_PWD is required)
+- See phpminiconfig.sample.vtiger.php to read Wordpress its config.inc.php ($ACCESS_PWD is required)
 
 ## Links
 - [Screenshots](http://sourceforge.net/project/screenshots.php?group_id=181023)
