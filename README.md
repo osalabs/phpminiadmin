@@ -9,6 +9,19 @@
 
 For additional security you may edit phpminiadmin.php file and set some password (see $ACCESS_PWD variable)
 
+## Config file
+
+You can also create phpminiconfig.php in the same directory as phpminiadmin.php with database credentials or password.
+This way you can easily install future releases of phpminiadmin.php
+
+In the directory samples you'll find phpminiconfig.php for known OpenSource packages
+
+- See phpminiconfig.php for an empty example
+- See phpminiconfig.magento.php to read Magento its app/etc/local.xml ($ACCESS_PWD is required)
+- See phpminiconfig.sugarcrm.php to read SugarCRM its config.php ($ACCESS_PWD is required)
+- See phpminiconfig.wordpress.php to read Wordpress its wp-config.php ($ACCESS_PWD is required)
+- See phpminiconfig.vtiger.php to read Vtiger its config.inc.php ($ACCESS_PWD is required)
+
 ## Links
 - [Screenshots](http://sourceforge.net/project/screenshots.php?group_id=181023)
 - [Live demo](http://phpminiadmin.sourceforge.net/phpminiadmin.php) (pwd: pmaiscool)
@@ -19,6 +32,13 @@ For additional security you may edit phpminiadmin.php file and set some password
 - [My website](http://osalabs.com)
 
 ## Change Log
+### changes in phpMiniAdmin 1.9.150108
+
+- httponly cookies so your plain password cannot be stolen by javascript
+- export disables foreign key checks
+- ask for super privilege(otherwise you get a error on import)
+- added support for a config file with credentials
+
 ### changes in phpMiniAdmin 1.9.141219
 
 - added: total count of records displayed for selects with pagination (example: 50 out of 104)
