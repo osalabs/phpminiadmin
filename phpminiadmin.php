@@ -510,7 +510,11 @@ function print_cfg(){
 function db_connect($nodie=0){
  global $dbh,$DB,$err_msg;
 
- $dbh=mysqli_connect($DB['host'].($DB['port']?":$DB[port]":''),$DB['user'],$DB['pwd']);
+ if ($DB['port']) {
+    $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd'],'',(int)$DB['port']);
+ } else {
+    $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd']);
+ }
  if (!$dbh) {
     $err_msg='Cannot connect to the database because: '.mysqli_connect_error();
     if (!$nodie) die($err_msg);
