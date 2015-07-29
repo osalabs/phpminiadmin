@@ -1,7 +1,7 @@
 <?php
 /*
  PHP Mini MySQL Admin
- (c) 2004-2014 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
+ (c) 2004-2015 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
 
  Light standalone PHP script for quick and easy access MySQL databases.
  http://phpminiadmin.sourceforge.net
@@ -458,7 +458,7 @@ Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_cou
 function print_footer(){
 ?>
 </form>
-<div class="ft">&copy; 2004-2014 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
+<div class="ft">&copy; 2004-2015 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
 </body></html>
 <?php
 }
