@@ -25,7 +25,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.150108';
+ $VERSION='1.9.150729';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -40,7 +40,7 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
  if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
  $xurl='XSS='.$_SESSION['XSS'];
 
- ini_set('display_errors',1);  #TODO turn off before deploy
+ ini_set('display_errors',0);  #turn on to debug db or script issues
  error_reporting(E_ALL ^ E_NOTICE);
 
 //strip quotes if they set
@@ -812,7 +812,7 @@ function do_export(){
   if ($DB['chset']=='utf8') ex_w($BOM);
 
   $sth=db_query("select * from `$t[0]`");
-  $fn=mysqli_field_count(dbh);
+  $fn=mysqli_field_count($dbh);
   for($i=0;$i<$fn;$i++){
    $m=mysqli_fetch_field($sth);
    ex_w(qstr($m->name).(($i<$fn-1)?",":""));

@@ -9,7 +9,7 @@
 
 For additional security you may edit phpminiadmin.php file and set some password (see $ACCESS_PWD variable)
 
-## Config file
+## Config file (optional)
 
 You can also create phpminiconfig.php in the same directory as phpminiadmin.php with database credentials or password.
 This way you can easily install future releases of phpminiadmin.php
@@ -27,11 +27,14 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 - [Live demo](http://phpminiadmin.sourceforge.net/phpminiadmin.php) (pwd: pmaiscool)
 - [Download latest version](https://sourceforge.net/projects/phpminiadmin/files/latest)
 - [SourceForge page of the phpMiniAdmin](http://phpminiadmin.sourceforge.net/)
-- [Google Code page of the phpMiniAdmin](http://code.google.com/p/phpminiadmin/)
 - [My Twitter](http://twitter.com/#!/osalabs)
 - [My website](http://osalabs.com)
 
 ## Change Log
+### changes in phpMiniAdmin 1.9.150729
+
+ - switched to MySQLi due to PHP7 deprecation of MySQL extension
+
 ### changes in phpMiniAdmin 1.9.150108
 
 - httponly cookies so your plain password cannot be stolen by javascript
