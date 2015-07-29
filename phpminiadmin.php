@@ -142,7 +142,7 @@ function do_sql($q){
  $SQLq=$q;
 
  if (!do_multi_sql($q)){
-    $out_message="Error: ".mysql_error($dbh);
+    $out_message="Error: ".mysqli_error($dbh);
  }else{
     if ($last_sth && $last_sql){
        $SQLq=$last_sql;
@@ -150,7 +150,7 @@ function do_sql($q){
           if ($q!=$last_sql) $out_message="Results of the last select displayed:";
           display_select($last_sth,$last_sql);
        } else {
-         $reccount=mysql_affected_rows($dbh);
+         $reccount=mysqli_affected_rows($dbh);
          $out_message="Done.";
          if (preg_match("/^insert|replace/i",$last_sql)) $out_message.=" Last inserted id=".get_identity();
          if (preg_match("/^drop|truncate/i",$last_sql)) do_sql($SHOW_T);
@@ -171,8 +171,8 @@ function display_select($sth,$q){
 
  if ($sth===FALSE or $sth===TRUE) return;#check if $sth is not a mysql resource
 
- $reccount=mysql_num_rows($sth);
- $fields_num=mysql_num_fields($sth);
+ $reccount=mysqli_num_rows($sth);
+ $fields_num=mysqli_field_count($dbh);
 
  $w='';
  if ($is_sht || $is_shd) {$w='wa';
@@ -201,7 +201,7 @@ function display_select($sth,$q){
  if ($is_sht) $headers.="<td><input type='checkbox' name='cball' value='' onclick='chkall(this)'></td>";
  for($i=0;$i<$fields_num;$i++){
     if ($is_sht && $i>0) break;
-    $meta=mysql_fetch_field($sth,$i);
+    $meta=mysqli_fetch_field($sth);
     $headers.="<th>".$meta->name."</th>";
  }
  if ($is_shd) $headers.="<th>show create database</th><th>show table status</th><th>show triggers</th>";
@@ -209,7 +209,7 @@ function display_select($sth,$q){
  $headers.="</tr>\n";
  $sqldr.=$headers;
  $swapper=false;
- while($row=mysql_fetch_row($sth)){
+ while($row=mysqli_fetch_row($sth)){
    $sqldr.="<tr class='".$rc[$swp=!$swp]."' onclick='tc(this)'>";
    for($i=0;$i<$fields_num;$i++){
       $v=$row[$i];$more='';
@@ -510,16 +510,20 @@ function print_cfg(){
 function db_connect($nodie=0){
  global $dbh,$DB,$err_msg;
 
- $dbh=@mysql_connect($DB['host'].($DB['port']?":$DB[port]":''),$DB['user'],$DB['pwd']);
+ if ($DB['port']) {
+    $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd'],'',(int)$DB['port']);
+ } else {
+    $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd']);
+ }
  if (!$dbh) {
-    $err_msg='Cannot connect to the database because: '.mysql_error();
+    $err_msg='Cannot connect to the database because: '.mysqli_connect_error();
     if (!$nodie) die($err_msg);
  }
 
  if ($dbh && $DB['db']) {
-  $res=mysql_select_db($DB['db'], $dbh);
+  $res=mysqli_select_db($dbh, $DB['db']);
   if (!$res) {
-     $err_msg='Cannot select db because: '.mysql_error();
+     $err_msg='Cannot select db because: '.mysqli_error($dbh);
      if (!$nodie) die($err_msg);
   }else{
      if ($DB['chset']) db_query("SET NAMES ".$DB['chset']);
@@ -532,7 +536,7 @@ function db_connect($nodie=0){
 function db_checkconnect($dbh1=NULL, $skiperr=0){
  global $dbh;
  if (!$dbh1) $dbh1=&$dbh;
- if (!$dbh1 or !mysql_ping($dbh1)) {
+ if (!$dbh1 or !mysqli_ping($dbh1)) {
     db_connect($skiperr);
     $dbh1=&$dbh;
  }
@@ -541,20 +545,20 @@ function db_checkconnect($dbh1=NULL, $skiperr=0){
 
 function db_disconnect(){
  global $dbh;
- mysql_close($dbh);
+ mysqli_close($dbh);
 }
 
 function dbq($s){
  global $dbh;
  if (is_null($s)) return "NULL";
- return "'".mysql_real_escape_string($s,$dbh)."'";
+ return "'".mysqli_real_escape_string($dbh,$s)."'";
 }
 
 function db_query($sql, $dbh1=NULL, $skiperr=0){
  $dbh1=db_checkconnect($dbh1, $skiperr);
- $sth=@mysql_query($sql, $dbh1);
+ $sth=mysqli_query($dbh1, $sql);
  if (!$sth && $skiperr) return;
- if (!$sth) die("Error in DB operation:<br>\n".mysql_error($dbh1)."<br>\n$sql");
+ if (!$sth) die("Error in DB operation:<br>\n".mysqli_error($dbh1)."<br>\n$sql");
  return $sth;
 }
 
@@ -563,27 +567,27 @@ function db_array($sql, $dbh1=NULL, $skiperr=0, $isnum=0){#array of rows
  if (!$sth) return;
  $res=array();
  if ($isnum){
-   while($row=mysql_fetch_row($sth)) $res[]=$row;
+   while($row=mysqli_fetch_row($sth)) $res[]=$row;
  }else{
-   while($row=mysql_fetch_assoc($sth)) $res[]=$row;
+   while($row=mysqli_fetch_assoc($sth)) $res[]=$row;
  }
  return $res;
 }
 
 function db_row($sql){
  $sth=db_query($sql);
- return mysql_fetch_assoc($sth);
+ return mysqli_fetch_assoc($sth);
 }
 
 function db_value($sql){
  $sth=db_query($sql);
- $row=mysql_fetch_row($sth);
+ $row=mysqli_fetch_row($sth);
  return $row[0];
 }
 
 function get_identity($dbh1=NULL){
  $dbh1=db_checkconnect($dbh1);
- return mysql_insert_id($dbh1);
+ return mysqli_insert_id($dbh1);
 }
 
 function get_db_select($sel=''){
@@ -786,7 +790,7 @@ function print_export(){
 }
 
 function do_export(){
- global $DB,$VERSION,$D,$BOM,$ex_isgz;
+ global $DB,$VERSION,$D,$BOM,$ex_isgz,$dbh;
  $rt=str_replace('`','',$_REQUEST['t']);
  $t=explode(",",$rt);
  $th=array_flip($t);
@@ -808,13 +812,13 @@ function do_export(){
   if ($DB['chset']=='utf8') ex_w($BOM);
 
   $sth=db_query("select * from `$t[0]`");
-  $fn=mysql_num_fields($sth);
+  $fn=mysqli_field_count(dbh);
   for($i=0;$i<$fn;$i++){
-   $m=mysql_fetch_field($sth,$i);
+   $m=mysqli_fetch_field($sth);
    ex_w(qstr($m->name).(($i<$fn-1)?",":""));
   }
   ex_w($D);
-  while($row=mysql_fetch_row($sth)) ex_w(to_csv_row($row));
+  while($row=mysqli_fetch_row($sth)) ex_w(to_csv_row($row));
   ex_end();
   exit;
  }
@@ -826,7 +830,7 @@ function do_export(){
  ex_w("/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;$D$D");
 
  $sth=db_query("show tables from `$DB[db]`");
- while($row=mysql_fetch_row($sth)){
+ while($row=mysqli_fetch_row($sth)){
    if (!$rt||array_key_exists($row[0],$th)) do_export_table($row[0],1,$MAXI);
  }
 
@@ -842,7 +846,7 @@ function do_export_table($t='',$isvar=0,$MAXI=838860){
 
  if($_REQUEST['s']){
   $sth=db_query("show create table `$t`");
-  $row=mysql_fetch_row($sth);
+  $row=mysqli_fetch_row($sth);
   $ct=preg_replace("/\n\r|\r\n|\n|\r/",$D,$row[1]);
   ex_w("DROP TABLE IF EXISTS `$t`;$D$ct;$D$D");
  }
@@ -851,7 +855,7 @@ function do_export_table($t='',$isvar=0,$MAXI=838860){
   $exsql='';
   ex_w("/*!40000 ALTER TABLE `$t` DISABLE KEYS */;$D");
   $sth=db_query("select * from `$t`");
-  while($row=mysql_fetch_row($sth)){
+  while($row=mysqli_fetch_row($sth)){
     $values='';
     foreach($row as $v) $values.=(($values)?',':'').dbq($v);
     $exsql.=(($exsql)?',':'')."(".$values.")";
@@ -954,7 +958,7 @@ function do_import(){
   }
   if (!$err_msg){
    if (!do_multi_sql('', $filename)){
-      $err_msg='Import Error: '.mysql_error($dbh);
+      $err_msg='Import Error: '.mysqli_error($dbh);
    }else{
       $out_message='Import done successfully';
       do_sql($SHOW_T);
