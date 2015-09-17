@@ -25,7 +25,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.150729';
+ $VERSION='1.9.150917';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -579,8 +579,9 @@ function db_row($sql){
  return mysqli_fetch_assoc($sth);
 }
 
-function db_value($sql){
- $sth=db_query($sql);
+function db_value($sql,$dbh1=NULL,$skiperr=0){
+ $sth=db_query($sql,$dbh1,$skiperr);
+ if (!$sth) return;
  $row=mysqli_fetch_row($sth);
  return $row[0];
 }
@@ -1085,7 +1086,7 @@ function do_one_sql($sql){
     if (preg_match("/^select/i",$sql) && !preg_match("/limit +\d+/i", $sql)){
        #get total count
        $sql1='select count(*) from ('.$sql.') ___count_table';
-       $last_count=db_value($sql1);
+       $last_count=db_value($sql1,NULL,'noerr');
 
        $offset=$page*$MAX_ROWS_PER_PAGE;
        $sql.=" LIMIT $offset,$MAX_ROWS_PER_PAGE";
