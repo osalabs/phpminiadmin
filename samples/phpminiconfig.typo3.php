@@ -1,6 +1,6 @@
 <?php
 /**
- * This script reads the default typo3 config
+ * This script reads the default typo3 config (for typo3 version 6)
  * You do not to set anything else than an access password
  */
 
