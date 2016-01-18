@@ -33,7 +33,7 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 ## Change Log
 ### changes in phpMiniAdmin 1.9.150729
 
- - switched to MySQLi due to PHP7 deprecation of MySQL extension
+ - switched to MySQLi because MySQL extension deprecated in PHP7
 
 ### changes in phpMiniAdmin 1.9.150108
 
