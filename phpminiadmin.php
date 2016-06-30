@@ -49,11 +49,6 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
   $_REQUEST=array_map('killmq',$_REQUEST);
  }
 
- if (!$ACCESS_PWD) {
-    $_SESSION['is_logged']=true;
-    loadcfg();
- }
-
  if ($_REQUEST['login']){
     if ($_REQUEST['pwd']!=$ACCESS_PWD){
        $err_msg="Invalid password. Try again";
@@ -75,8 +70,13 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
  }
 
  if (!$_SESSION['is_logged']){
-    print_login();
-    exit;
+    if (!$ACCESS_PWD) {
+      $_SESSION['is_logged']=true;
+      loadcfg();
+    }else{
+      print_login();
+      exit;
+    }
  }
 
  if ($_REQUEST['savecfg']){
@@ -368,7 +368,7 @@ function q_next(){
 }
 function after_load(){
  var F=document.DF;
- var p=F.pwd;
+ var p=F['v[pwd]'];
  if (p) p.focus();
  qcur=lsmax();
 
@@ -425,7 +425,7 @@ function sht(f){
 <?php } ?>
  | <a href="?showcfg=1">Settings</a>
 <?php } ?>
-<?php if ($GLOBALS['ACCESS_PWD']){?> | <a href="?<?php eo($xurl)?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
+<?php if ($_SESSION['is_logged']){?> | <a href="?<?php eo($xurl)?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
  | <a href="?phpinfo=1">phpinfo</a>
 </div>
 
@@ -501,7 +501,7 @@ function print_cfg(){
 <label><div class="l">DB name:</div><input type="text" name="v[db]" value="<?php eo($DB['db'])?>"></label><br>
 <label><div class="l">MySQL host:</div><input type="text" name="v[host]" value="<?php eo($DB['host'])?>"></label> <label>port: <input type="text" name="v[port]" value="<?php eo($DB['port'])?>" size="4"></label><br>
 <label><div class="l">Charset:</div><select name="v[chset]"><option value="">- default -</option><?php echo chset_select($DB['chset'])?></select></label><br>
-<br><label for ="rmb"><input type="checkbox" name="rmb" id="rmb" value="1" checked> Remember in cookies for 30 days</label>
+<br><label for ="rmb"><input type="checkbox" name="rmb" id="rmb" value="1" checked> Remember in cookies for 30 days or until Logoff</label>
 </div>
 <center>
 <input type="hidden" name="savecfg" value="1">
@@ -744,7 +744,6 @@ function loadcfg(){
  global $DBDEF;
 
  if( isset($_COOKIE['conn']) ){
-    $a=$_COOKIE['conn'];
     $_SESSION['DB']=$_COOKIE['conn'];
  }else{
     $_SESSION['DB']=$DBDEF;
