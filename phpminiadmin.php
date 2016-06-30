@@ -1,7 +1,7 @@
 <?php
 /*
  PHP Mini MySQL Admin
- (c) 2004-2015 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
+ (c) 2004-2016 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
 
  Light standalone PHP script for quick and easy access MySQL databases.
  http://phpminiadmin.sourceforge.net
@@ -25,7 +25,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.150917';
+ $VERSION='1.9.160630';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -40,7 +40,7 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
  if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
  $xurl='XSS='.$_SESSION['XSS'];
 
- ini_set('display_errors',0);  #turn on to debug db or script issues
+ ini_set('display_errors',1);  #turn on to debug db or script issues
  error_reporting(E_ALL ^ E_NOTICE);
 
 //strip quotes if they set
@@ -179,12 +179,12 @@ function display_select($sth,$q){
    $url='?'.$xurl."&db=$dbn";
    $sqldr.="<div class='dot'>
 &nbsp;MySQL Server:
-&nbsp;&#183;<a href='$url&q=" . base64_encode("show variables") . "'>Show Configuration Variables</a>
-&nbsp;&#183;<a href='$url&q=" . base64_encode("show status") . "'>Show Statistics</a>
-&nbsp;&#183;<a href='$url&q=" . base64_encode("show processlist") . "'>Show Processlist</a>";
+&nbsp;&#183;<a href='$url&q=".b64e("show variables")."'>Show Configuration Variables</a>
+&nbsp;&#183;<a href='$url&q=".b64e("show status")."'>Show Statistics</a>
+&nbsp;&#183;<a href='$url&q=".b64e("show processlist")."'>Show Processlist</a>";
    if ($is_shd) $sqldr.="&nbsp;&#183;<label>Create new database: <input type='text' name='new_db' placeholder='type db name here'></label> <input type='submit' name='crdb' value='Create'>";
    $sqldr.="<br>";
-   if ($is_sht) $sqldr.="&nbsp;Database:&nbsp;&#183;<a href='$url&q=" . base64_encode("show table status") . "'>Show Table Status</a>";
+   if ($is_sht) $sqldr.="&nbsp;Database:&nbsp;&#183;<a href='$url&q=".b64e("show table status")."'>Show Table Status</a>";
    $sqldr.="</div>";
  }
  if ($is_sht){
@@ -218,25 +218,25 @@ function display_select($sth,$q){
          $vq='`'.$v.'`';
          $url='?'.$xurl."&db=$dbn";
          $v="<input type='checkbox' name='cb[]' value=\"$vq\"></td>"
-         ."<td><a href=\"$url&q=" . base64_encode("select * from {$vq}") . "\">$v</a></td>"
+         ."<td><a href=\"$url&q=".b64e("select * from {$vq}")."\">$v</a></td>"
          ."<td>".$row[1]."</td>"
          ."<td align='right'>".$row[4]."</td>"
          ."<td align='right'>".$row[6]."</td>"
          ."<td align='right'>".$row[8]."</td>"
-         ."<td>&#183;<a href=\"$url&q=" . base64_encode("show create table {$vq}") . "\">sct</a></td>"
-         ."<td>&#183;<a href=\"$url&q=" . base64_encode("explain {$vq}") . "\">exp</a></td>"
-         ."<td>&#183;<a href=\"$url&q=" . base64_encode("show index from {$vq}") . "\">ind</a></td>"
+         ."<td>&#183;<a href=\"$url&q=".b64e("show create table {$vq}")."\">sct</a></td>"
+         ."<td>&#183;<a href=\"$url&q=".b64e("explain {$vq}")."\">exp</a></td>"
+         ."<td>&#183;<a href=\"$url&q=".b64e("show index from {$vq}")."\">ind</a></td>"
          ."<td>&#183;<a href=\"$url&shex=1&t=$vq\">export</a></td>"
-         ."<td>&#183;<a href=\"$url&q=" . base64_encode("drop table {$vq}") . "\" onclick='return ays()'>dr</a></td>"
-         ."<td>&#183;<a href=\"$url&q=" . base64_encode("truncate table {$vq}") . "\" onclick='return ays()'>tr</a></td>"
-         ."<td>&#183;<a href=\"$url&q=" . base64_encode("optimize table {$vq}") . "\" onclick='return ays()'>opt</a></td>"
-         ."<td>&#183;<a href=\"$url&q=" . base64_encode("repair table {$vq}") . "\" onclick='return ays()'>rpr</a>";
+         ."<td>&#183;<a href=\"$url&q=".b64e("drop table {$vq}")."\" onclick='return ays()'>dr</a></td>"
+         ."<td>&#183;<a href=\"$url&q=".b64e("truncate table {$vq}")."\" onclick='return ays()'>tr</a></td>"
+         ."<td>&#183;<a href=\"$url&q=".b64e("optimize table {$vq}")."\" onclick='return ays()'>opt</a></td>"
+         ."<td>&#183;<a href=\"$url&q=".b64e("repair table {$vq}")."\" onclick='return ays()'>rpr</a>";
       }elseif ($is_shd && $i==0 && $v){
          $url='?'.$xurl."&db=$v";
-         $v="<a href=\"$url&q=" . base64_encode("SHOW TABLE STATUS") . "\">$v</a></td>"
-         ."<td><a href=\"$url&q=" . base64_encode("show create database `{$v}`") . "\">scd</a></td>"
-         ."<td><a href=\"$url&q=" . base64_encode("show table status") . "\">status</a></td>"
-         ."<td><a href=\"$url&q=" . base64_encode("show triggers") . "\">trig</a></td>"
+         $v="<a href=\"$url&q=".b64e("SHOW TABLE STATUS")."\">$v</a></td>"
+         ."<td><a href=\"$url&q=".b64e("show create database `{$v}`")."\">scd</a></td>"
+         ."<td><a href=\"$url&q=".b64e("show table status")."\">status</a></td>"
+         ."<td><a href=\"$url&q=".b64e("show triggers")."\">trig</a>"
          ;
       }else{
        if (is_null($v)) $v="NULL";
@@ -299,7 +299,7 @@ function frefresh(){
  var F=document.DF;
  F.method='get';
  F.refresh.value="1";
- F.submit();
+ F.GoSQL.click();
 }
 function go(p,sql){
  var F=document.DF;
@@ -311,7 +311,7 @@ function ays(){
  return confirm('Are you sure to continue?');
 }
 function chksql(){
- var F=document.DF,v=F.rawQuery.value;
+ var F=document.DF,v=F.qraw.value;
  if(/^\s*(?:delete|drop|truncate|alter)/.test(v)) if(!ays())return false;
  if(lschk(1)){
   var lsm=lsmax()+1,ls=localStorage;
@@ -355,7 +355,7 @@ function q_prev(){
  qcur--;
  var x=parseInt(ls[LSKM]);
  if(qcur<x)qcur=x;
- $('rawQuery').value=ls[LSK+qcur];
+ $('qraw').value=ls[LSK+qcur];
 }
 function q_next(){
  var ls=localStorage;
@@ -363,15 +363,18 @@ function q_next(){
  qcur++;
  var x=parseInt(ls[LSKX]);
  if(qcur>x)qcur=x;
- $('rawQuery').value=ls[LSK+qcur];
+ $('qraw').value=ls[LSK+qcur];
 }
 function after_load(){
- var p=document.DF.pwd;
+ var F=document.DF;
+ var p=F.pwd;
  if (p) p.focus();
  qcur=lsmax();
 
- $('DF').addEventListener('submit', function() {
-    $('base64EncodedQuery').value = b64EncodeUnicode($('rawQuery').value);
+ F.addEventListener('submit',function(e){
+  if(!F.qraw)return;
+  if(!chksql()){e.preventDefault();return}
+  $('q').value=btoa(encodeURIComponent($('qraw').value).replace(/%([0-9A-F]{2})/g,function(m,p){return String.fromCharCode('0x'+p)}));
  });
 }
 function logoff(){
@@ -400,13 +403,6 @@ function sht(f){
  document.DF.dosht.value=f;
 }
 <?php }?>
-
-function b64EncodeUnicode(str) {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-        return String.fromCharCode('0x' + p1);
-    }));
-}
-
 </script>
 
 </head>
@@ -419,10 +415,10 @@ function b64EncodeUnicode(str) {
 <div class="inv">
 <a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
 <?php if ($_SESSION['is_logged'] && $dbh){ ?>
- | <a href="?<?php eo($xurl)?>&q=<?=base64_encode("show databases");?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
+ | <a href="?<?php eo($xurl)?>&q=<?=b64e("show databases");?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
 <?php echo get_db_select($dbn)?></select>
 <?php if($dbn){ $z=" &#183; <a href='".hs($self."?$xurl&db=$dbn"); ?>
-<?php echo $z.'&q='.base64_encode($SHOW_T)?>'>show tables</a>
+<?php echo $z.'&q='.b64e($SHOW_T)?>'>show tables</a>
 <?php echo $z?>&shex=1'>export</a>
 <?php echo $z?>&shim=1'>import</a>
 <?php } ?>
@@ -449,11 +445,11 @@ function print_screen(){
 ?>
 
 <div class="dot" style="padding:0 0 5px 20px">
-<label for="q">SQL-query (or multiple queries separated by ";"):</label>&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
-<textarea id="rawQuery" cols="70" rows="10" style="width:98%"><?php eo($SQLq)?></textarea><br>
-<input type="hidden" name="q" id="base64EncodedQuery" value="<?php base64_encode($SQLq);?>">
-<input type="submit" name="GoSQL" value="Go" onclick="return chksql()" style="width:100px">&nbsp;&nbsp;
-<input type="button" name="Clear" value=" Clear " onclick="$('rawQuery').value = '';" style="width:100px">
+<label for="qraw">SQL-query (or multiple queries separated by ";"):</label>&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
+<textarea id="qraw" cols="70" rows="10" style="width:98%"><?php eo($SQLq)?></textarea><br>
+<input type="hidden" name="q" id="q" value="<?php b64e($SQLq);?>">
+<input type="submit" name="GoSQL" value="Go" style="width:100px">&nbsp;&nbsp;
+<input type="button" name="Clear" value=" Clear " onclick="$('qraw').value='';" style="width:100px">
 </div>
 <div class="dot" style="padding:5px 0 5px 20px">
 Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_count){eo(' out of '.$last_count);}?></b> in <b><?php eo($time_all)?></b> sec<br>
@@ -1183,5 +1179,9 @@ function hs($s){
 }
 function eo($s){//echo+escape
   echo hs($s);
+}
+
+function b64e($s){
+  return base64_encode($s);
 }
 ?>
