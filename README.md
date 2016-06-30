@@ -33,7 +33,8 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 ## Change Log
 ### changes in phpMiniAdmin 1.9.160630
 
-- all queries now base64 encoded to bypass applications firewalls. Note, IE10 browser or later required from now
+- all queries now base64 encoded to bypass applications firewalls. Note, **IE10 browser or later required from now**
+- SHOW TABLE STATUS fixed to display views, also Comments column added
 
 ### changes in phpMiniAdmin 1.9.150729
 
