@@ -100,7 +100,11 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
     $time_start=microtime_float();
 
     if ($_REQUEST['phpinfo']){
-       ob_start();phpinfo();$sqldr='<div style="font-size:130%">'.ob_get_clean().'</div>';
+       ob_start();
+       phpinfo();
+       $html = ob_get_clean();
+       preg_match("/<body[^>]*>(.*?)<\/body>/is", $html, $matches); // show only <body>-content
+       $sqldr='<div class="phpinfo">'.$matches[1].'</div>';
     }else{
      if ($DB['db']){
       if ($_REQUEST['shex']){
@@ -268,16 +272,16 @@ function print_header(){
 <meta charset="utf-8">
 <style type="text/css">
 body{font-family:Arial,sans-serif;font-size:80%;padding:0;margin:0}
-th,td{padding:0;margin:0}
 div{padding:3px}
 pre{font-size:125%}
 .nav{text-align:center}
 .ft{text-align:right;margin-top:20px;font-size:smaller}
 .inv{background-color:#069;color:#FFF}
 .inv a{color:#FFF}
-table.res{width:100%;border-collapse:collapse;}
+table{border-collapse:collapse;}
+table.res{width:100%;}
 table.wa{width:auto}
-table.res th,table.res td{padding:2px;border:1px solid #fff;vertical-align: top}
+table.res th,table.res td{padding:2px;border:1px solid #fff;vertical-align:top}
 table.restr{vertical-align:top}
 tr.e{background-color:#CCC}
 tr.o{background-color:#EEE}
@@ -288,8 +292,16 @@ tr.s{background-color:#FF9}
 .frm{width:400px;border:1px solid #999;background-color:#eee;text-align:left}
 .frm label .l{width:100px;float:left}
 .dot{border-bottom:1px dotted #000}
-.ajax{text-decoration: none;border-bottom: 1px dashed;}
+.ajax{text-decoration:none;border-bottom: 1px dashed;}
 .qnav{width:30px}
+.phpinfo a {text-decoration:none;}
+.phpinfo hr {display:none;}
+.phpinfo img {float:right;}
+.phpinfo .center {text-align:center;}
+.phpinfo table {margin:0 auto;}
+.phpinfo table td, .phpinfo table th {border:1px solid #000000;text-align:left;vertical-align:baseline;}
+.phpinfo table .e {background-color:#ccccff;font-weight:bold;}
+.phpinfo table .v {background-color:#cccccc;}
 </style>
 
 <script type="text/javascript">
