@@ -181,25 +181,28 @@ function display_select($sth,$q){
  $w='';
  if ($is_sht || $is_shd) {$w='wa';
    $url='?'.$xurl."&db=$dbn";
-   $sqldr.="<div class='dot'>
-&nbsp;MySQL Server:
-&nbsp;&#183;<a href='$url&q=".b64e("show variables")."'>Show Configuration Variables</a>
-&nbsp;&#183;<a href='$url&q=".b64e("show status")."'>Show Statistics</a>
-&nbsp;&#183;<a href='$url&q=".b64e("show processlist")."'>Show Processlist</a>";
-   if ($is_shd) $sqldr.="&nbsp;&#183;<label>Create new database: <input type='text' name='new_db' placeholder='type db name here'></label> <input type='submit' name='crdb' value='Create'>";
+   $sqldr.="<div class='dot'>";
+   $sqldr.=" MySQL Server: ";
+   $sqldr.=" &#183; <a href='$url&q=".b64e("show variables")."'>Show Configuration Variables</a> ";
+   $sqldr.=" &#183; <a href='$url&q=".b64e("show status")."'>Show Statistics</a> ";
+   $sqldr.=" &#183; <a href='$url&q=".b64e("show processlist")."'>Show Processlist</a> ";
+   if ($is_shd) $sqldr.="&#183; <label>Create new database: <input type='text' name='new_db' placeholder='type db name here'></label> <input type='submit' name='crdb' value='Create'>";
    $sqldr.="<br>";
-   if ($is_sht) $sqldr.="&nbsp;Database:&nbsp;&#183;<a href='$url&q=".b64e("show table status")."'>Show Table Status</a>";
+   if ($is_sht) $sqldr.="Database: &#183; <a href='$url&q=".b64e("show table status")."'>Show Table Status</a>";
    $sqldr.="</div>";
  }
  if ($is_sht){
-   $abtn="&nbsp;<input type='submit' value='Export' onclick=\"sht('exp')\">
- <input type='submit' value='Drop' onclick=\"if(ays()){sht('drop')}else{return false}\">
- <input type='submit' value='Truncate' onclick=\"if(ays()){sht('trunc')}else{return false}\">
- <input type='submit' value='Optimize' onclick=\"sht('opt')\">
- <b>selected tables</b>";
+   $abtn="<div>";
+   $abtn.=" <input type='submit' value='Export' onclick=\"sht('exp')\"> ";
+   $abtn.=" <input type='submit' value='Drop' onclick=\"if(ays()){sht('drop')}else{return false}\"> ";
+   $abtn.=" <input type='submit' value='Truncate' onclick=\"if(ays()){sht('trunc')}else{return false}\"> ";
+   $abtn.=" <input type='submit' value='Optimize' onclick=\"sht('opt')\"> ";
+   $abtn.=" <b>selected tables</b> ";
+   $abtn.="</div>";
    $sqldr.=$abtn."<input type='hidden' name='dosht' value=''>";
  }
 
+ $sqldr.="<div>";
  $sqldr.="<table class='res $w'>";
  $headers="<tr class='h'>";
  if ($is_sht) $headers.="<td><input type='checkbox' name='cball' value='' onclick='chkall(this)'></td>";
@@ -259,7 +262,9 @@ function display_select($sth,$q){
    }
    $sqldr.="</tr>\n";
  }
- $sqldr.="</table>\n".$abtn;
+ $sqldr.="</table>\n";
+ $sqldr.="</div>\n";
+ $sqldr.=$abtn;
 }
 
 function print_header(){
@@ -271,12 +276,14 @@ function print_header(){
 <head><title>phpMiniAdmin</title>
 <meta charset="utf-8">
 <style type="text/css">
-body{font-family:Arial,sans-serif;font-size:80%;padding:0;margin:0}
+* {box-sizing:border-box;}
+body{font-family:Arial,sans-serif;font-size:80%;padding:0 1em;margin:0}
 div{padding:3px}
 pre{font-size:125%}
+textarea {width:100%;}
 .nav{text-align:center}
 .ft{text-align:right;margin-top:20px;font-size:smaller}
-.inv{background-color:#069;color:#FFF}
+.inv{margin:0 -1em;background-color:#069;color:#FFF}
 .inv a{color:#FFF}
 table{border-collapse:collapse;}
 table.res{width:100%;}
@@ -458,9 +465,9 @@ function print_screen(){
  print_header();
 ?>
 
-<div class="dot" style="padding:0 0 5px 20px">
+<div class="dot">
 <label for="qraw">SQL-query (or multiple queries separated by ";"):</label>&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
-<textarea id="qraw" cols="70" rows="10" style="width:98%"><?php eo($SQLq)?></textarea><br>
+<textarea id="qraw" cols="70" rows="10"><?php eo($SQLq)?></textarea><br>
 <input type="hidden" name="q" id="q" value="<?php b64e($SQLq);?>">
 <input type="submit" name="GoSQL" value="Go" style="width:100px">
 <input type="button" name="Clear" value=" Clear " onclick="$('qraw').value='';" style="width:100px">
@@ -472,13 +479,11 @@ function print_screen(){
 <br class="clear">
 <?php } ?>
 </div>
-<div class="dot" style="padding:5px 0 5px 20px">
+<div class="dot"">
 Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_count){eo(' out of '.$last_count);}?></b> in <b><?php eo($time_all)?></b> sec<br>
 <b><?php eo($out_message)?></b>
 </div>
-<div class="sqldr">
 <?php echo $nav.$sqldr.$nav; ?>
-</div>
 <?php
  print_footer();
 }
