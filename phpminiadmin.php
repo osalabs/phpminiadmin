@@ -294,6 +294,7 @@ tr.s{background-color:#FF9}
 .dot{border-bottom:1px dotted #000}
 .ajax{text-decoration:none;border-bottom: 1px dashed;}
 .qnav{width:30px}
+.clear {clear:both; height:0; display:block;}
 .phpinfo a {text-decoration:none;}
 .phpinfo hr {display:none;}
 .phpinfo img {float:right;}
@@ -461,8 +462,15 @@ function print_screen(){
 <label for="qraw">SQL-query (or multiple queries separated by ";"):</label>&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
 <textarea id="qraw" cols="70" rows="10" style="width:98%"><?php eo($SQLq)?></textarea><br>
 <input type="hidden" name="q" id="q" value="<?php b64e($SQLq);?>">
-<input type="submit" name="GoSQL" value="Go" style="width:100px">&nbsp;&nbsp;
+<input type="submit" name="GoSQL" value="Go" style="width:100px">
 <input type="button" name="Clear" value=" Clear " onclick="$('qraw').value='';" style="width:100px">
+<?php if (!empty($_REQUEST['db'])) { ?>
+<input type="button" name="Delete" value=" Delete " onclick="$('qraw').value='DELETE FROM `<?php echo $_REQUEST['db']; ?>` WHERE 1';" style="float:right; width:100px">
+<input type="button" name="Update" value=" Update " onclick="$('qraw').value='UPDATE `<?php echo $_REQUEST['db']; ?>` SET `column`=\'value\' WHERE 1';" style="float:right; width:100px">
+<input type="button" name="Insert" value=" Insert " onclick="$('qraw').value='INSERT INTO `<?php echo $_REQUEST['db']; ?>` (`column`, `column`) VALUES (\'value\', \'value\')';" style="float:right; width:100px">
+<input type="button" name="Select" value=" Select " onclick="$('qraw').value='SELECT * FROM `<?php echo $_REQUEST['db']; ?>` WHERE 1';" style="float:right; width:100px">
+<br class="clear">
+<?php } ?>
 </div>
 <div class="dot" style="padding:5px 0 5px 20px">
 Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_count){eo(' out of '.$last_count);}?></b> in <b><?php eo($time_all)?></b> sec<br>
