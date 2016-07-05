@@ -21,11 +21,12 @@
  'port'=>"",#optional
  'chset'=>"utf8",#optional, default charset
  );
+ $IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
 file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read from config (easier to update)
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.160630';
+ $VERSION='1.9.160705';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -1106,17 +1107,18 @@ function get_close_char($str, $pos, $ochar){
 }
 
 function do_one_sql($sql){
- global $last_sth,$last_sql,$MAX_ROWS_PER_PAGE,$page,$is_limited_sql, $last_count;
+ global $last_sth,$last_sql,$MAX_ROWS_PER_PAGE,$page,$is_limited_sql,$last_count,$IS_COUNT;
  $sql=trim($sql);
  $sql=preg_replace("/;$/","",$sql);
  if ($sql){
     $last_sql=$sql;$is_limited_sql=0;
     $last_count=NULL;
     if (preg_match("/^select/i",$sql) && !preg_match("/limit +\d+/i", $sql)){
-       #get total count
-       $sql1='select count(*) from ('.$sql.') ___count_table';
-       $last_count=db_value($sql1,NULL,'noerr');
-
+       if ($IS_COUNT){
+          #get total count
+          $sql1='select count(*) from ('.$sql.') ___count_table';
+          $last_count=db_value($sql1,NULL,'noerr');
+       }
        $offset=$page*$MAX_ROWS_PER_PAGE;
        $sql.=" LIMIT $offset,$MAX_ROWS_PER_PAGE";
        $is_limited_sql=1;
