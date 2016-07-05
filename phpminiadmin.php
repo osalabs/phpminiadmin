@@ -100,7 +100,11 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
     $time_start=microtime_float();
 
     if ($_REQUEST['phpinfo']){
-       ob_start();phpinfo();$sqldr='<div style="font-size:130%">'.ob_get_clean().'</div>';
+       ob_start();
+       phpinfo();
+       $html = ob_get_clean();
+       preg_match("/<body[^>]*>(.*?)<\/body>/is", $html, $matches); // show only <body>-content
+       $sqldr='<div class="phpinfo">'.$matches[1].'</div>';
     }else{
      if ($DB['db']){
       if ($_REQUEST['shex']){
@@ -177,25 +181,28 @@ function display_select($sth,$q){
  $w='';
  if ($is_sht || $is_shd) {$w='wa';
    $url='?'.$xurl."&db=$dbn";
-   $sqldr.="<div class='dot'>
-&nbsp;MySQL Server:
-&nbsp;&#183;<a href='$url&q=".b64e("show variables")."'>Show Configuration Variables</a>
-&nbsp;&#183;<a href='$url&q=".b64e("show status")."'>Show Statistics</a>
-&nbsp;&#183;<a href='$url&q=".b64e("show processlist")."'>Show Processlist</a>";
-   if ($is_shd) $sqldr.="&nbsp;&#183;<label>Create new database: <input type='text' name='new_db' placeholder='type db name here'></label> <input type='submit' name='crdb' value='Create'>";
+   $sqldr.="<div class='dot'>";
+   $sqldr.=" MySQL Server: ";
+   $sqldr.=" &#183; <a href='$url&q=".b64e("show variables")."'>Show Configuration Variables</a> ";
+   $sqldr.=" &#183; <a href='$url&q=".b64e("show status")."'>Show Statistics</a> ";
+   $sqldr.=" &#183; <a href='$url&q=".b64e("show processlist")."'>Show Processlist</a> ";
+   if ($is_shd) $sqldr.="&#183; <label>Create new database: <input type='text' name='new_db' placeholder='type db name here'></label> <input type='submit' name='crdb' value='Create'>";
    $sqldr.="<br>";
-   if ($is_sht) $sqldr.="&nbsp;Database:&nbsp;&#183;<a href='$url&q=".b64e("show table status")."'>Show Table Status</a>";
+   if ($is_sht) $sqldr.="Database: &#183; <a href='$url&q=".b64e("show table status")."'>Show Table Status</a>";
    $sqldr.="</div>";
  }
  if ($is_sht){
-   $abtn="&nbsp;<input type='submit' value='Export' onclick=\"sht('exp')\">
- <input type='submit' value='Drop' onclick=\"if(ays()){sht('drop')}else{return false}\">
- <input type='submit' value='Truncate' onclick=\"if(ays()){sht('trunc')}else{return false}\">
- <input type='submit' value='Optimize' onclick=\"sht('opt')\">
- <b>selected tables</b>";
+   $abtn="<div>";
+   $abtn.=" <input type='submit' value='Export' onclick=\"sht('exp')\"> ";
+   $abtn.=" <input type='submit' value='Drop' onclick=\"if(ays()){sht('drop')}else{return false}\"> ";
+   $abtn.=" <input type='submit' value='Truncate' onclick=\"if(ays()){sht('trunc')}else{return false}\"> ";
+   $abtn.=" <input type='submit' value='Optimize' onclick=\"sht('opt')\"> ";
+   $abtn.=" <b>selected tables</b> ";
+   $abtn.="</div>";
    $sqldr.=$abtn."<input type='hidden' name='dosht' value=''>";
  }
 
+ $sqldr.="<div>";
  $sqldr.="<table class='res $w'>";
  $headers="<tr class='h'>";
  if ($is_sht) $headers.="<td><input type='checkbox' name='cball' value='' onclick='chkall(this)'></td>";
@@ -255,7 +262,9 @@ function display_select($sth,$q){
    }
    $sqldr.="</tr>\n";
  }
- $sqldr.="</table>\n".$abtn;
+ $sqldr.="</table>\n";
+ $sqldr.="</div>\n";
+ $sqldr.=$abtn;
 }
 
 function print_header(){
@@ -267,17 +276,19 @@ function print_header(){
 <head><title>phpMiniAdmin</title>
 <meta charset="utf-8">
 <style type="text/css">
-body{font-family:Arial,sans-serif;font-size:80%;padding:0;margin:0}
-th,td{padding:0;margin:0}
+* {box-sizing:border-box;}
+body{font-family:Arial,sans-serif;font-size:80%;padding:0 1em;margin:0}
 div{padding:3px}
 pre{font-size:125%}
+textarea {width:100%;}
 .nav{text-align:center}
 .ft{text-align:right;margin-top:20px;font-size:smaller}
-.inv{background-color:#069;color:#FFF}
+.inv{margin:0 -1em;background-color:#069;color:#FFF}
 .inv a{color:#FFF}
-table.res{width:100%;border-collapse:collapse;}
+table{border-collapse:collapse;}
+table.res{width:100%;}
 table.wa{width:auto}
-table.res th,table.res td{padding:2px;border:1px solid #fff;vertical-align: top}
+table.res th,table.res td{padding:2px;border:1px solid #fff;vertical-align:top}
 table.restr{vertical-align:top}
 tr.e{background-color:#CCC}
 tr.o{background-color:#EEE}
@@ -288,8 +299,17 @@ tr.s{background-color:#FF9}
 .frm{width:400px;border:1px solid #999;background-color:#eee;text-align:left}
 .frm label .l{width:100px;float:left}
 .dot{border-bottom:1px dotted #000}
-.ajax{text-decoration: none;border-bottom: 1px dashed;}
+.ajax{text-decoration:none;border-bottom: 1px dashed;}
 .qnav{width:30px}
+.clear {clear:both; height:0; display:block;}
+.phpinfo a {text-decoration:none;}
+.phpinfo hr {display:none;}
+.phpinfo img {float:right;}
+.phpinfo .center {text-align:center;}
+.phpinfo table {margin:0 auto;}
+.phpinfo table td, .phpinfo table th {border:1px solid #000000;text-align:left;vertical-align:baseline;}
+.phpinfo table .e {background-color:#ccccff;font-weight:bold;}
+.phpinfo table .v {background-color:#cccccc;}
 </style>
 
 <script type="text/javascript">
@@ -445,20 +465,25 @@ function print_screen(){
  print_header();
 ?>
 
-<div class="dot" style="padding:0 0 5px 20px">
+<div class="dot">
 <label for="qraw">SQL-query (or multiple queries separated by ";"):</label>&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
-<textarea id="qraw" cols="70" rows="10" style="width:98%"><?php eo($SQLq)?></textarea><br>
+<textarea id="qraw" cols="70" rows="10"><?php eo($SQLq)?></textarea><br>
 <input type="hidden" name="q" id="q" value="<?php b64e($SQLq);?>">
-<input type="submit" name="GoSQL" value="Go" style="width:100px">&nbsp;&nbsp;
+<input type="submit" name="GoSQL" value="Go" style="width:100px">
 <input type="button" name="Clear" value=" Clear " onclick="$('qraw').value='';" style="width:100px">
+<?php if (!empty($_REQUEST['db'])) { ?>
+<input type="button" name="Delete" value=" Delete " onclick="$('qraw').value='DELETE FROM `<?php echo $_REQUEST['db']; ?>` WHERE 1';" style="float:right; width:100px">
+<input type="button" name="Update" value=" Update " onclick="$('qraw').value='UPDATE `<?php echo $_REQUEST['db']; ?>` SET `column`=\'value\' WHERE 1';" style="float:right; width:100px">
+<input type="button" name="Insert" value=" Insert " onclick="$('qraw').value='INSERT INTO `<?php echo $_REQUEST['db']; ?>` (`column`, `column`) VALUES (\'value\', \'value\')';" style="float:right; width:100px">
+<input type="button" name="Select" value=" Select " onclick="$('qraw').value='SELECT * FROM `<?php echo $_REQUEST['db']; ?>` WHERE 1';" style="float:right; width:100px">
+<br class="clear">
+<?php } ?>
 </div>
-<div class="dot" style="padding:5px 0 5px 20px">
+<div class="dot"">
 Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_count){eo(' out of '.$last_count);}?></b> in <b><?php eo($time_all)?></b> sec<br>
 <b><?php eo($out_message)?></b>
 </div>
-<div class="sqldr">
 <?php echo $nav.$sqldr.$nav; ?>
-</div>
 <?php
  print_footer();
 }
