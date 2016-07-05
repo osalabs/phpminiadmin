@@ -92,7 +92,7 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
  }
 
  //get initial values
- $SQLq=trim(base64_decode($_REQUEST['q']));
+ $SQLq=trim(b64d($_REQUEST['q']));
  $page=$_REQUEST['p']+0;
  if ($_REQUEST['refresh'] && $DB['db'] && preg_match('/^show/',$SQLq) ) $SQLq=$SHOW_T;
 
@@ -100,11 +100,8 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
     $time_start=microtime_float();
 
     if ($_REQUEST['phpinfo']){
-       ob_start();
-       phpinfo();
-       $html = ob_get_clean();
-       preg_match("/<body[^>]*>(.*?)<\/body>/is", $html, $matches); // show only <body>-content
-       $sqldr='<div class="phpinfo">'.$matches[1].'</div>';
+       ob_start();phpinfo();$html=ob_get_clean();preg_match("/<body[^>]*>(.*?)<\/body>/is",$html,$m);
+       $sqldr='<div class="pi">'.$m[1].'</div>';
     }else{
      if ($DB['db']){
       if ($_REQUEST['shex']){
@@ -181,29 +178,26 @@ function display_select($sth,$q){
  $w='';
  if ($is_sht || $is_shd) {$w='wa';
    $url='?'.$xurl."&db=$dbn";
-   $sqldr.="<div class='dot'>";
-   $sqldr.=" MySQL Server: ";
-   $sqldr.=" &#183; <a href='$url&q=".b64e("show variables")."'>Show Configuration Variables</a> ";
-   $sqldr.=" &#183; <a href='$url&q=".b64e("show status")."'>Show Statistics</a> ";
-   $sqldr.=" &#183; <a href='$url&q=".b64e("show processlist")."'>Show Processlist</a> ";
+   $sqldr.="<div class='dot'>
+ MySQL Server:
+ &#183; <a href='$url&q=".b64e("show variables")."'>Show Configuration Variables</a>
+ &#183; <a href='$url&q=".b64e("show status")."'>Show Statistics</a>
+ &#183; <a href='$url&q=".b64e("show processlist")."'>Show Processlist</a> ";
    if ($is_shd) $sqldr.="&#183; <label>Create new database: <input type='text' name='new_db' placeholder='type db name here'></label> <input type='submit' name='crdb' value='Create'>";
    $sqldr.="<br>";
    if ($is_sht) $sqldr.="Database: &#183; <a href='$url&q=".b64e("show table status")."'>Show Table Status</a>";
    $sqldr.="</div>";
  }
  if ($is_sht){
-   $abtn="<div>";
-   $abtn.=" <input type='submit' value='Export' onclick=\"sht('exp')\"> ";
-   $abtn.=" <input type='submit' value='Drop' onclick=\"if(ays()){sht('drop')}else{return false}\"> ";
-   $abtn.=" <input type='submit' value='Truncate' onclick=\"if(ays()){sht('trunc')}else{return false}\"> ";
-   $abtn.=" <input type='submit' value='Optimize' onclick=\"sht('opt')\"> ";
-   $abtn.=" <b>selected tables</b> ";
-   $abtn.="</div>";
+   $abtn="<div><input type='submit' value='Export' onclick=\"sht('exp')\">
+ <input type='submit' value='Drop' onclick=\"if(ays()){sht('drop')}else{return false}\">
+ <input type='submit' value='Truncate' onclick=\"if(ays()){sht('trunc')}else{return false}\">
+ <input type='submit' value='Optimize' onclick=\"sht('opt')\">
+ <b>selected tables</b></div>";
    $sqldr.=$abtn."<input type='hidden' name='dosht' value=''>";
  }
 
- $sqldr.="<div>";
- $sqldr.="<table class='res $w'>";
+ $sqldr.="<div><table class='res $w'>";
  $headers="<tr class='h'>";
  if ($is_sht) $headers.="<td><input type='checkbox' name='cball' value='' onclick='chkall(this)'></td>";
  for($i=0;$i<$fields_num;$i++){
@@ -221,7 +215,7 @@ function display_select($sth,$q){
    $v=$row[0];
    if ($is_sht){
      $vq='`'.$v.'`';
-     $url='?'.$xurl."&db=$dbn";
+     $url='?'.$xurl."&db=$dbn&t=".b64e($v);
      $v="<input type='checkbox' name='cb[]' value=\"$vq\"></td>"
      ."<td><a href=\"$url&q=".b64e("select * from $vq")."\">$v</a></td>"
      ."<td>".$row[1]."</td>"
@@ -231,7 +225,7 @@ function display_select($sth,$q){
      ."<td>&#183;<a href=\"$url&q=".b64e("show create table $vq")."\">sct</a></td>"
      ."<td>&#183;<a href=\"$url&q=".b64e("explain $vq")."\">exp</a></td>"
      ."<td>&#183;<a href=\"$url&q=".b64e("show index from $vq")."\">ind</a></td>"
-     ."<td>&#183;<a href=\"$url&shex=1&t=$vq\">export</a></td>"
+     ."<td>&#183;<a href=\"$url&shex=1&rt=$vq\">export</a></td>"
      ."<td>&#183;<a href=\"$url&q=".b64e("drop table $vq")."\" onclick='return ays()'>dr</a></td>"
      ."<td>&#183;<a href=\"$url&q=".b64e("truncate table $vq")."\" onclick='return ays()'>tr</a></td>"
      ."<td>&#183;<a href=\"$url&q=".b64e("optimize table $vq")."\" onclick='return ays()'>opt</a></td>"
@@ -262,9 +256,7 @@ function display_select($sth,$q){
    }
    $sqldr.="</tr>\n";
  }
- $sqldr.="</table>\n";
- $sqldr.="</div>\n";
- $sqldr.=$abtn;
+ $sqldr.="</table></div>\n".$abtn;
 }
 
 function print_header(){
@@ -276,40 +268,41 @@ function print_header(){
 <head><title>phpMiniAdmin</title>
 <meta charset="utf-8">
 <style type="text/css">
-* {box-sizing:border-box;}
-body{font-family:Arial,sans-serif;font-size:80%;padding:0 1em;margin:0}
+*{box-sizing:border-box;}
+body{font-family:Arial,sans-serif;font-size:80%;padding:0;margin:0}
 div{padding:3px}
 pre{font-size:125%}
-textarea {width:100%;}
+textarea{width:100%}
 .nav{text-align:center}
 .ft{text-align:right;margin-top:20px;font-size:smaller}
-.inv{margin:0 -1em;background-color:#069;color:#FFF}
+.inv{background-color:#069;color:#FFF}
 .inv a{color:#FFF}
-table{border-collapse:collapse;}
-table.res{width:100%;}
+table{border-collapse:collapse}
+table.res{width:100%}
 table.wa{width:auto}
 table.res th,table.res td{padding:2px;border:1px solid #fff;vertical-align:top}
 table.restr{vertical-align:top}
 tr.e{background-color:#CCC}
 tr.o{background-color:#EEE}
-tr.e:hover, tr.o:hover {background-color:#FF9}
+tr.e:hover, tr.o:hover{background-color:#FF9}
 tr.h{background-color:#99C}
 tr.s{background-color:#FF9}
 .err{color:#F33;font-weight:bold;text-align:center}
 .frm{width:400px;border:1px solid #999;background-color:#eee;text-align:left}
 .frm label .l{width:100px;float:left}
 .dot{border-bottom:1px dotted #000}
-.ajax{text-decoration:none;border-bottom: 1px dashed;}
+.ajax{text-decoration:none;border-bottom: 1px dashed}
 .qnav{width:30px}
-.clear {clear:both; height:0; display:block;}
-.phpinfo a {text-decoration:none;}
-.phpinfo hr {display:none;}
-.phpinfo img {float:right;}
-.phpinfo .center {text-align:center;}
-.phpinfo table {margin:0 auto;}
-.phpinfo table td, .phpinfo table th {border:1px solid #000000;text-align:left;vertical-align:baseline;}
-.phpinfo table .e {background-color:#ccccff;font-weight:bold;}
-.phpinfo table .v {background-color:#cccccc;}
+.sbtn{width:100px}
+.clear{clear:both;height:0;display:block}
+.pi a{text-decoration:none}
+.pi hr{display:none}
+.pi img{float:right}
+.pi .center{text-align:center}
+.pi table{margin:0 auto}
+.pi table td, .pi table th{border:1px solid #000000;text-align:left;vertical-align:baseline}
+.pi table .e{background-color:#ccccff;font-weight:bold}
+.pi table .v{background-color:#cccccc}
 </style>
 
 <script type="text/javascript">
@@ -412,6 +405,9 @@ function cfg_toggle(){
  var e=$('cfg-adv');
  e.style.display=e.style.display=='none'?'':'none';
 }
+function qtpl(s){
+ $('qraw').value=s.replace(/%T/g,'`<?php echo $_REQUEST['t']?b64d($_REQUEST['t']):'tablename'?>`');
+}
 <?php if($is_sht){?>
 function chkall(cab){
  var e=document.DF.elements;
@@ -465,21 +461,22 @@ function print_screen(){
  print_header();
 ?>
 
-<div class="dot">
+<div class="dot" style="padding:3px 20px">
 <label for="qraw">SQL-query (or multiple queries separated by ";"):</label>&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
 <textarea id="qraw" cols="70" rows="10"><?php eo($SQLq)?></textarea><br>
 <input type="hidden" name="q" id="q" value="<?php b64e($SQLq);?>">
-<input type="submit" name="GoSQL" value="Go" style="width:100px">
+<input type="submit" name="GoSQL" value="Go" class="sbtn">
 <input type="button" name="Clear" value=" Clear " onclick="$('qraw').value='';" style="width:100px">
-<?php if (!empty($_REQUEST['db'])) { ?>
-<input type="button" name="Delete" value=" Delete " onclick="$('qraw').value='DELETE FROM `<?php echo $_REQUEST['db']; ?>` WHERE 1';" style="float:right; width:100px">
-<input type="button" name="Update" value=" Update " onclick="$('qraw').value='UPDATE `<?php echo $_REQUEST['db']; ?>` SET `column`=\'value\' WHERE 1';" style="float:right; width:100px">
-<input type="button" name="Insert" value=" Insert " onclick="$('qraw').value='INSERT INTO `<?php echo $_REQUEST['db']; ?>` (`column`, `column`) VALUES (\'value\', \'value\')';" style="float:right; width:100px">
-<input type="button" name="Select" value=" Select " onclick="$('qraw').value='SELECT * FROM `<?php echo $_REQUEST['db']; ?>` WHERE 1';" style="float:right; width:100px">
-<br class="clear">
+<?php if(!empty($_REQUEST['db'])){ ?>
+<div style="float:right">
+<input type="button" value="Select" class="sbtn" onclick="qtpl('SELECT *\nFROM %T\nWHERE 1')">
+<input type="button" value="Insert" class="sbtn" onclick="qtpl('INSERT INTO %T (`column`, `column`)\nVALUES (\'value\', \'value\')')">
+<input type="button" value="Update" class="sbtn" onclick="qtpl('UPDATE %T\nSET `column`=\'value\'\nWHERE 1=0')">
+<input type="button" value="Delete" class="sbtn" onclick="qtpl('DELETE FROM %T\nWHERE 1=0')">
+</div><br class="clear">
 <?php } ?>
 </div>
-<div class="dot"">
+<div class="dot">
 Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_count){eo(' out of '.$last_count);}?></b> in <b><?php eo($time_all)?></b> sec<br>
 <b><?php eo($out_message)?></b>
 </div>
@@ -791,7 +788,7 @@ function loadsess(){
 
 function print_export(){
  global $self,$xurl,$DB;
- $t=$_REQUEST['t'];
+ $t=$_REQUEST['rt'];
  $l=($t)?"Table $t":"whole DB";
  print_header();
 ?>
@@ -813,7 +810,7 @@ function print_export(){
 <div><label><input type="checkbox" name="gz" value="1"> compress as .gz</label></div>
 <br>
 <input type="hidden" name="doex" value="1">
-<input type="hidden" name="t" value="<?php eo($t)?>">
+<input type="hidden" name="rt" value="<?php eo($t)?>">
 <input type="submit" value=" Download "><input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
 </div>
 </center>
@@ -824,7 +821,7 @@ function print_export(){
 
 function do_export(){
  global $DB,$VERSION,$D,$BOM,$ex_isgz,$dbh;
- $rt=str_replace('`','',$_REQUEST['t']);
+ $rt=str_replace('`','',$_REQUEST['rt']);
  $t=explode(",",$rt);
  $th=array_flip($t);
  $ct=count($t);
@@ -1208,5 +1205,8 @@ function eo($s){//echo+escape
 
 function b64e($s){
   return base64_encode($s);
+}
+function b64d($s){
+  return base64_decode($s);
 }
 ?>
