@@ -31,6 +31,11 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 - [My website](http://osalabs.com)
 
 ## Change Log
+### changes in phpMiniAdmin 1.9.160705
+- screen appearance changes/fixes
+- added buttons which inserts standard "template" queries for Select, Insert, Update, Delete
+- disabled counting total number of records for pagination as it slows down response, especially on large datasets. Set `$IS_COUNT=true` to enable this feature back.
+
 ### changes in phpMiniAdmin 1.9.160630
 
 - all queries now base64 encoded to bypass applications firewalls. Note, **IE10 browser or later required from now**
