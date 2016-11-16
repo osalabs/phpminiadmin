@@ -22,11 +22,12 @@
  'chset'=>"utf8",#optional, default charset
  );
  $IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
+ $DUMP_FILE=dirname(__FILE__).'/ppmdump'; #path to file without extension used for server-side exports (timestamp, .sql/.csv/.gz extension added) or imports(.sql)
 file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read from config (easier to update)
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.160705';
+ $VERSION='1.9.161116';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -788,7 +789,7 @@ function loadsess(){
 }
 
 function print_export(){
- global $self,$xurl,$DB;
+ global $self,$xurl,$DB,$DUMP_FILE;
  $t=$_REQUEST['rt'];
  $l=($t)?"Table $t":"whole DB";
  print_header();
@@ -812,7 +813,10 @@ function print_export(){
 <br>
 <input type="hidden" name="doex" value="1">
 <input type="hidden" name="rt" value="<?php eo($t)?>">
-<input type="submit" value=" Download "><input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
+<input type="submit" value=" Download ">
+<input type="submit" name="srv" value=" Dump on Server ">
+<input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
+<p><small>"Dump on Server" exports to file:<br><?php eo(export_fname($DUMP_FILE).'.sql')?></small></p>
 </div>
 </center>
 <?php
@@ -820,8 +824,13 @@ function print_export(){
  exit;
 }
 
+function export_fname($f,$ist=false){
+ $t=$ist?date('Y-m-d-His'):'YYYY-MM-DD-HHMMSS';
+ return $f.$t;
+}
+
 function do_export(){
- global $DB,$VERSION,$D,$BOM,$ex_isgz,$dbh;
+ global $DB,$VERSION,$D,$BOM,$ex_isgz,$ex_issrv,$dbh,$out_message;
  $rt=str_replace('`','',$_REQUEST['rt']);
  $t=explode(",",$rt);
  $th=array_flip($t);
@@ -836,9 +845,10 @@ function do_export(){
  if ($ex_isgz) {
     $aext='.gz';$ctp='application/x-gzip';
  }
- ex_start();
+ $ex_issrv=($_REQUEST['srv'])?1:0;
 
  if ($ct==1&&$_REQUEST['et']=='csv'){
+  ex_start('.csv');
   ex_hdr($ctp?$ctp:'text/csv',"$t[0].csv$aext");
   if ($DB['chset']=='utf8') ex_w($BOM);
 
@@ -850,29 +860,29 @@ function do_export(){
   }
   ex_w($D);
   while($row=mysqli_fetch_row($sth)) ex_w(to_csv_row($row));
-  ex_end();
-  exit;
+ }else{
+  ex_start('.sql');
+  ex_hdr($ctp?$ctp:'text/plain',"$DB[db]".(($ct==1&&$t[0])?".$t[0]":(($ct>1)?'.'.$ct.'tables':'')).".sql$aext");
+  ex_w("-- phpMiniAdmin dump $VERSION$D-- Datetime: ".date('Y-m-d H:i:s')."$D-- Host: $DB[host]$D-- Database: $DB[db]$D$D");
+  ex_w("/*!40030 SET NAMES $DB[chset] */;$D");
+  $ex_super && ex_w("/*!40030 SET GLOBAL max_allowed_packet=16777216 */;$D$D");
+  ex_w("/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;$D$D");
+
+  $sth=db_query("show tables from `$DB[db]`");
+  while($row=mysqli_fetch_row($sth)){
+    if (!$rt||array_key_exists($row[0],$th)) do_export_table($row[0],1,$MAXI);
+  }
+
+  ex_w("/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;$D$D");
+  ex_w("$D-- phpMiniAdmin dump end$D");
  }
-
- ex_hdr($ctp?$ctp:'text/plain',"$DB[db]".(($ct==1&&$t[0])?".$t[0]":(($ct>1)?'.'.$ct.'tables':'')).".sql$aext");
- ex_w("-- phpMiniAdmin dump $VERSION$D-- Datetime: ".date('Y-m-d H:i:s')."$D-- Host: $DB[host]$D-- Database: $DB[db]$D$D");
- ex_w("/*!40030 SET NAMES $DB[chset] */;$D");
- $ex_super && ex_w("/*!40030 SET GLOBAL max_allowed_packet=16777216 */;$D$D");
- ex_w("/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;$D$D");
-
- $sth=db_query("show tables from `$DB[db]`");
- while($row=mysqli_fetch_row($sth)){
-   if (!$rt||array_key_exists($row[0],$th)) do_export_table($row[0],1,$MAXI);
- }
-
- ex_w("/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;$D$D");
- ex_w("$D-- phpMiniAdmin dump end$D");
  ex_end();
- exit;
+ if (!$ex_issrv) exit;
+ $out_message='Export done successfully';
 }
 
 function do_export_table($t='',$isvar=0,$MAXI=838860){
- global $D;
+ global $D,$ex_issrv;
  @set_time_limit(600);
 
  if($_REQUEST['s']){
@@ -897,34 +907,46 @@ function do_export_table($t='',$isvar=0,$MAXI=838860){
   if ($exsql) ex_w("INSERT INTO `$t` VALUES $exsql;$D");
   ex_w("/*!40000 ALTER TABLE `$t` ENABLE KEYS */;$D$D");
  }
- flush();
+ if (!$ex_issrv) flush();
 }
 
 function ex_hdr($ct,$fn){
+ global $ex_issrv;
+ if ($ex_issrv) return;
  header("Content-type: $ct");
  header("Content-Disposition: attachment; filename=\"$fn\"");
 }
-function ex_start(){
- global $ex_isgz,$ex_gz,$ex_tmpf;
+function ex_start($ext){
+ global $ex_isgz,$ex_gz,$ex_tmpf,$ex_issrv,$ex_f,$DUMP_FILE;
  if ($ex_isgz){
-    $ex_tmpf=tmp_name().'.gz';
+    $ex_tmpf=($ex_issrv?export_fname($DUMP_FILE,true).$ext:tmp_name()).'.gz';
     if (!($ex_gz=gzopen($ex_tmpf,'wb9'))) die("Error trying to create gz tmp file");
+ }else{
+    if ($ex_issrv) $ex_f=fopen(export_fname($DUMP_FILE,true).$ext,'wb');
  }
 }
 function ex_w($s){
- global $ex_isgz,$ex_gz;
+ global $ex_isgz,$ex_gz,$ex_issrv,$ex_f;
  if ($ex_isgz){
     gzwrite($ex_gz,$s,strlen($s));
  }else{
-    echo $s;
+    if ($ex_issrv){
+        fwrite($ex_f,$s);
+    }else{
+        echo $s;
+    }
  }
 }
 function ex_end(){
- global $ex_isgz,$ex_gz,$ex_tmpf;
+ global $ex_isgz,$ex_gz,$ex_tmpf,$ex_issrv,$ex_f;
  if ($ex_isgz){
     gzclose($ex_gz);
-    readfile($ex_tmpf);
-    unlink($ex_tmpf);
+    if (!$ex_issrv){
+      readfile($ex_tmpf);
+      unlink($ex_tmpf);
+    }
+ }else{
+    if ($ex_issrv) fclose($ex_f);
  }
 }
 
