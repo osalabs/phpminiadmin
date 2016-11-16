@@ -31,6 +31,9 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 - [My website](http://osalabs.com)
 
 ## Change Log
+### changes in phpMiniAdmin 1.9.161116
+- added ability to dump exports right on server, without need to download
+
 ### changes in phpMiniAdmin 1.9.160705
 - screen appearance changes/fixes
 - added buttons which inserts standard "template" queries for Select, Insert, Update, Delete
