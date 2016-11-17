@@ -22,7 +22,7 @@
  'chset'=>"utf8",#optional, default charset
  );
  $IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
- $DUMP_FILE=dirname(__FILE__).'/ppmdump'; #path to file without extension used for server-side exports (timestamp, .sql/.csv/.gz extension added) or imports(.sql)
+ $DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used for server-side exports (timestamp, .sql/.csv/.gz extension added) or imports(.sql)
 file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read from config (easier to update)
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
@@ -864,13 +864,13 @@ function do_export(){
   ex_start('.sql');
   ex_hdr($ctp?$ctp:'text/plain',"$DB[db]".(($ct==1&&$t[0])?".$t[0]":(($ct>1)?'.'.$ct.'tables':'')).".sql$aext");
   ex_w("-- phpMiniAdmin dump $VERSION$D-- Datetime: ".date('Y-m-d H:i:s')."$D-- Host: $DB[host]$D-- Database: $DB[db]$D$D");
-  ex_w("/*!40030 SET NAMES $DB[chset] */;$D");
+  if ($DB['chset']) ex_w("/*!40030 SET NAMES $DB[chset] */;$D");
   $ex_super && ex_w("/*!40030 SET GLOBAL max_allowed_packet=16777216 */;$D$D");
   ex_w("/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;$D$D");
 
-  $sth=db_query("show tables from `$DB[db]`");
+  $sth=db_query("show full tables from `$DB[db]`");
   while($row=mysqli_fetch_row($sth)){
-    if (!$rt||array_key_exists($row[0],$th)) do_export_table($row[0],1,$MAXI);
+    if (!$rt||array_key_exists($row[0],$th)) do_export_table($row[0],$row[1],$MAXI);
   }
 
   ex_w("/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;$D$D");
@@ -881,7 +881,7 @@ function do_export(){
  $out_message='Export done successfully';
 }
 
-function do_export_table($t='',$isvar=0,$MAXI=838860){
+function do_export_table($t='',$tt='',$MAXI=838860){
  global $D,$ex_issrv;
  @set_time_limit(600);
 
@@ -892,7 +892,7 @@ function do_export_table($t='',$isvar=0,$MAXI=838860){
   ex_w("DROP TABLE IF EXISTS `$t`;$D$ct;$D$D");
  }
 
- if ($_REQUEST['d']){
+ if ($_REQUEST['d']&&$tt!='VIEW'){//no dump for views
   $exsql='';
   ex_w("/*!40000 ALTER TABLE `$t` DISABLE KEYS */;$D");
   $sth=db_query("select * from `$t`");
@@ -951,15 +951,21 @@ function ex_end(){
 }
 
 function print_import(){
- global $self,$xurl,$DB;
+ global $self,$xurl,$DB,$DUMP_FILE;
  print_header();
 ?>
 <center>
 <h3>Import DB</h3>
 <div class="frm">
-<b>.sql</b> or <b>.gz</b> file: <input type="file" name="file1" value="" size=40><br>
+<div><label><input type="radio" name="it" value="" checked> import by uploading <b>.sql</b> or <b>.gz</b> file:</label>
+ <input type="file" name="file1" value="" size=40><br>
+</div>
+<div><label><input type="radio" name="it" value="sql"> import from file on server:<br>
+ <?php eo($DUMP_FILE.'.sql')?></label></div>
+<div><label><input type="radio" name="it" value="gz"> import from file on server:<br>
+ <?php eo($DUMP_FILE.'.sql.gz')?></label></div>
 <input type="hidden" name="doim" value="1">
-<input type="submit" value=" Upload and Import " onclick="return ays()"><input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
+<input type="submit" value=" Import " onclick="return ays()"><input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
 </div>
 <br><br><br>
 <!--
@@ -993,14 +999,24 @@ Import into:<br>
 }
 
 function do_import(){
- global $err_msg,$out_message,$dbh,$SHOW_T;
+ global $err_msg,$out_message,$dbh,$SHOW_T,$DUMP_FILE;
  $err_msg='';
- $F=$_FILES['file1'];
+ $it=$_REQUEST['it'];
 
- if ($F && $F['name']){
-  $filename=$F['tmp_name'];
-  $pi=pathinfo($F['name']);
-  if ($pi['extension']!='sql'){//if not sql - assume .gz
+ if (!$it){
+    $F=$_FILES['file1'];
+    if ($F && $F['name']){
+       $filename=$F['tmp_name'];
+       $pi=pathinfo($F['name']);
+       $ext=$pi['extension'];
+    }
+ }else{
+    $ext=($it=='gz'?'sql.gz':'sql');
+    $filename=$DUMP_FILE.'.'.$ext;
+ }
+
+ if ($filename && file_exists($filename)){
+  if ($ext!='sql'){//if not sql - assume .gz and extract
      $tmpf=tmp_name();
      if (($gz=gzopen($filename,'rb')) && ($tf=fopen($tmpf,'wb'))){
         while(!gzeof($gz)){
@@ -1017,8 +1033,9 @@ function do_import(){
       do_sql($SHOW_T);
       return;
   }}
+
  }else{
-  $err_msg="Error: Please select file first";
+    $err_msg="Error: Please select file first";
  }
  print_import();
  exit;
