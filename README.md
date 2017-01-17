@@ -31,6 +31,9 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 - [My website](http://osalabs.com)
 
 ## Change Log
+### changes in phpMiniAdmin 1.9.170117
+- greatly optimized memory usage for large result sets (especially in export)
+
 ### changes in phpMiniAdmin 1.9.161116
 - added ability to dump exports right on server, without need to download
 - added ability to import from .sql or .gz file right on server, without need to upload one

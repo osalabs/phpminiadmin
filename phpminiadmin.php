@@ -1,7 +1,7 @@
 <?php
 /*
  PHP Mini MySQL Admin
- (c) 2004-2016 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
+ (c) 2004-2017 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
 
  Light standalone PHP script for quick and easy access MySQL databases.
  http://phpminiadmin.sourceforge.net
@@ -27,7 +27,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.161116';
+ $VERSION='1.9.170117';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -586,16 +586,16 @@ function dbq($s){
  return "'".mysqli_real_escape_string($dbh,$s)."'";
 }
 
-function db_query($sql, $dbh1=NULL, $skiperr=0){
+function db_query($sql, $dbh1=NULL, $skiperr=0, $resmod=MYSQLI_STORE_RESULT){
  $dbh1=db_checkconnect($dbh1, $skiperr);
- $sth=mysqli_query($dbh1, $sql);
+ $sth=mysqli_query($dbh1, $sql, $resmod);
  if (!$sth && $skiperr) return;
  if (!$sth) die("Error in DB operation:<br>\n".mysqli_error($dbh1)."<br>\n$sql");
  return $sth;
 }
 
 function db_array($sql, $dbh1=NULL, $skiperr=0, $isnum=0){#array of rows
- $sth=db_query($sql, $dbh1, $skiperr);
+ $sth=db_query($sql, $dbh1, $skiperr, MYSQLI_USE_RESULT);
  if (!$sth) return;
  $res=array();
  if ($isnum){
@@ -603,6 +603,7 @@ function db_array($sql, $dbh1=NULL, $skiperr=0, $isnum=0){#array of rows
  }else{
    while($row=mysqli_fetch_assoc($sth)) $res[]=$row;
  }
+ mysqli_free_result($sth);
  return $res;
 }
 
@@ -852,7 +853,7 @@ function do_export(){
   ex_hdr($ctp?$ctp:'text/csv',"$t[0].csv$aext");
   if ($DB['chset']=='utf8') ex_w($BOM);
 
-  $sth=db_query("select * from `$t[0]`");
+  $sth=db_query("select * from `$t[0]`",NULL,0,MYSQLI_USE_RESULT);
   $fn=mysqli_field_count($dbh);
   for($i=0;$i<$fn;$i++){
    $m=mysqli_fetch_field($sth);
@@ -860,6 +861,7 @@ function do_export(){
   }
   ex_w($D);
   while($row=mysqli_fetch_row($sth)) ex_w(to_csv_row($row));
+  mysqli_free_result($sth);
  }else{
   ex_start('.sql');
   ex_hdr($ctp?$ctp:'text/plain',"$DB[db]".(($ct==1&&$t[0])?".$t[0]":(($ct>1)?'.'.$ct.'tables':'')).".sql$aext");
@@ -895,7 +897,7 @@ function do_export_table($t='',$tt='',$MAXI=838860){
  if ($_REQUEST['d']&&$tt!='VIEW'){//no dump for views
   $exsql='';
   ex_w("/*!40000 ALTER TABLE `$t` DISABLE KEYS */;$D");
-  $sth=db_query("select * from `$t`");
+  $sth=db_query("select * from `$t`",NULL,0,MYSQLI_USE_RESULT);
   while($row=mysqli_fetch_row($sth)){
     $values='';
     foreach($row as $v) $values.=(($values)?',':'').dbq($v);
@@ -904,6 +906,7 @@ function do_export_table($t='',$tt='',$MAXI=838860){
        ex_w("INSERT INTO `$t` VALUES $exsql;$D");$exsql='';
     }
   }
+  mysqli_free_result($sth);
   if ($exsql) ex_w("INSERT INTO `$t` VALUES $exsql;$D");
   ex_w("/*!40000 ALTER TABLE `$t` ENABLE KEYS */;$D$D");
  }
@@ -922,7 +925,9 @@ function ex_start($ext){
     $ex_tmpf=($ex_issrv?export_fname($DUMP_FILE,true).$ext:tmp_name()).'.gz';
     if (!($ex_gz=gzopen($ex_tmpf,'wb9'))) die("Error trying to create gz tmp file");
  }else{
-    if ($ex_issrv) $ex_f=fopen(export_fname($DUMP_FILE,true).$ext,'wb');
+    if ($ex_issrv) {
+      if (!($ex_f=fopen(export_fname($DUMP_FILE,true).$ext,'wb'))) die("Error trying to create dump file");
+    }
  }
 }
 function ex_w($s){
