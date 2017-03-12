@@ -31,6 +31,9 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 - [My website](http://osalabs.com)
 
 ## Change Log
+### changes in phpMiniAdmin 1.9.170203
+- added "compact view" option. If checked - width/height of grid cells limited, so you can see more rows/columns in case your data is large. And in this mode you can double-click on cells to "expand" just that particular cell.
+
 ### changes in phpMiniAdmin 1.9.170117
 - greatly optimized memory usage for large result sets (especially in export)
 
