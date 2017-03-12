@@ -27,7 +27,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.170117';
+ $VERSION='1.9.170312';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -163,7 +163,7 @@ function do_sql($q){
 }
 
 function display_select($sth,$q){
- global $dbh,$DB,$sqldr,$reccount,$is_sht,$xurl;
+ global $dbh,$DB,$sqldr,$reccount,$is_sht,$xurl,$is_sm;
  $rc=array("o","e");
  $dbn=$DB['db'];
  $sqldr='';
@@ -178,6 +178,7 @@ function display_select($sth,$q){
  $fields_num=mysqli_field_count($dbh);
 
  $w='';
+ if ($is_sm) $w='sm ';
  if ($is_sht || $is_shd) {$w='wa';
    $url='?'.$xurl."&db=$dbn";
    $sqldr.="<div class='dot'>
@@ -199,13 +200,13 @@ function display_select($sth,$q){
    $sqldr.=$abtn."<input type='hidden' name='dosht' value=''>";
  }
 
- $sqldr.="<div><table class='res $w'>";
+ $sqldr.="<div><table id='res' class='res $w'>";
  $headers="<tr class='h'>";
  if ($is_sht) $headers.="<td><input type='checkbox' name='cball' value='' onclick='chkall(this)'></td>";
  for($i=0;$i<$fields_num;$i++){
     if ($is_sht && $i>0) break;
     $meta=mysqli_fetch_field($sth);
-    $headers.="<th>".$meta->name."</th>";
+    $headers.="<th><div>".$meta->name."</div></th>";
  }
  if ($is_shd) $headers.="<th>show create database</th><th>show table status</th><th>show triggers</th>";
  if ($is_sht) $headers.="<th>engine</th><th>~rows</th><th>data size</th><th>index size</th><th>show create table</th><th>explain</th><th>indexes</th><th>export</th><th>drop</th><th>truncate</th><th>optimize</th><th>repair</th><th>comment</th>";
@@ -253,7 +254,7 @@ function display_select($sth,$q){
        $v='BINARY: '.chunk_split(strtoupper(bin2hex($v)),2,' ').$pf;
       }else $v=hs($v);
       if ($is_show_crt) $v="<pre>$v</pre>";
-      $sqldr.="<td>$v".(!strlen($v)?"<br>":'')."</td>";
+      $sqldr.="<td><div>$v".(!strlen($v)?"<br>":'')."</div></td>";
      }
    }
    $sqldr.="</tr>\n";
@@ -283,6 +284,10 @@ table{border-collapse:collapse}
 table.res{width:100%}
 table.wa{width:auto}
 table.res th,table.res td{padding:2px;border:1px solid #fff;vertical-align:top}
+table.sm th,table.sm td{max-width:30em}
+table.sm th>div,table.sm td>div{max-height:3.5em;overflow:hidden}
+table.sm th.lg,table.sm td.lg{max-width:inherit}
+table.sm th.lg>div,table.sm td.lg>div{max-height:inherit;overflow:inherit}
 table.restr{vertical-align:top}
 tr.e{background-color:#CCC}
 tr.o{background-color:#EEE}
@@ -392,6 +397,15 @@ function after_load(){
   if(!chksql()){e.preventDefault();return}
   $('q').value=btoa(encodeURIComponent($('qraw').value).replace(/%([0-9A-F]{2})/g,function(m,p){return String.fromCharCode('0x'+p)}));
  });
+ var res=$('res');
+ if(res)res.addEventListener('dblclick',function(e){
+  if(!$('is_sm').checked)return;
+  var el=e.target;
+  if(el.tagName!='TD')el=el.parentNode;
+  if(el.tagName!='TD')return;
+  if(el.className.match(/\b\lg\b/))el.className=el.className.replace(/\blg\b/,' ');
+  else el.className+=' lg';
+ });
 }
 function logoff(){
  if(lschk()){
@@ -409,6 +423,9 @@ function cfg_toggle(){
 }
 function qtpl(s){
  $('qraw').value=s.replace(/%T/g,'`<?php echo $_REQUEST['t']?b64d($_REQUEST['t']):'tablename'?>`');
+}
+function smview(){
+ if($('is_sm').checked){$('res').className+=' sm'}else{$('res').className = $('res').className.replace(/\bsm\b/,' ')}
 }
 <?php if($is_sht){?>
 function chkall(cab){
@@ -453,7 +470,7 @@ function sht(f){
 }
 
 function print_screen(){
- global $out_message, $SQLq, $err_msg, $reccount, $time_all, $sqldr, $page, $MAX_ROWS_PER_PAGE, $is_limited_sql, $last_count;
+ global $out_message, $SQLq, $err_msg, $reccount, $time_all, $sqldr, $page, $MAX_ROWS_PER_PAGE, $is_limited_sql, $last_count, $is_sm;
 
  $nav='';
  if ($is_limited_sql && ($page || $reccount>=$MAX_ROWS_PER_PAGE) ){
@@ -479,6 +496,7 @@ function print_screen(){
 <?php } ?>
 </div>
 <div class="dot">
+<div style="float:right;padding:0 15px"><label><input type="checkbox" name="is_sm" value="1" id="is_sm" onclick="smview()" <?php eo($is_sm?'checked':'')?>> compact view</label></div>
 Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_count){eo(' out of '.$last_count);}?></b> in <b><?php eo($time_all)?></b> sec<br>
 <b><?php eo($out_message)?></b>
 </div>
@@ -778,7 +796,7 @@ function loadcfg(){
 
 //each time - from session to $DB_*
 function loadsess(){
- global $DB;
+ global $DB, $is_sm;
 
  $DB=$_SESSION['DB'];
 
@@ -787,6 +805,8 @@ function loadsess(){
  if ($rdb) {
     $DB['db']=$rdb;
  }
+ if($_REQUEST['GoSQL']) $_SESSION['is_sm']=$_REQUEST['is_sm']+0;
+ $is_sm=$_SESSION['is_sm']+0;
 }
 
 function print_export(){
