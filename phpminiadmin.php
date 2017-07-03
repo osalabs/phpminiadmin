@@ -27,7 +27,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.170313';
+ $VERSION='1.9.170703';
  $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
  $D="\r\n"; #default delimiter for export
  $BOM=chr(239).chr(187).chr(191);
@@ -101,7 +101,7 @@ if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC
  if (db_connect('nodie')){
     $time_start=microtime_float();
 
-    if ($_REQUEST['showphpinfo']){
+    if ($_REQUEST['pi']){
        ob_start();phpinfo();$html=ob_get_clean();preg_match("/<body[^>]*>(.*?)<\/body>/is",$html,$m);
        $sqldr='<div class="pi">'.$m[1].'</div>';
     }else{
@@ -461,7 +461,7 @@ function sht(f){
  | <a href="?showcfg=1">Settings</a>
 <?php } ?>
 <?php if ($_SESSION['is_logged']){?> | <a href="?<?php eo($xurl)?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
- | <a href="?showphpinfo=1">phpinfo</a>
+ | <a href="?pi=1">phpinfo</a>
 </div>
 
 <div class="err"><?php eo($err_msg)?></div>
