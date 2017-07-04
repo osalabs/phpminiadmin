@@ -206,7 +206,7 @@ function display_select($sth,$q){
  for($i=0;$i<$fields_num;$i++){
     if ($is_sht && $i>0) break;
     $meta=mysqli_fetch_field($sth);
-    $headers.="<th><div>".$meta->name."</div></th>";
+    $headers.="<th><div>".htmlentities($meta->name, ENT_QUOTES)."</div></th>";
  }
  if ($is_shd) $headers.="<th>show create database</th><th>show table status</th><th>show triggers</th>";
  if ($is_sht) $headers.="<th>engine</th><th>~rows</th><th>data size</th><th>index size</th><th>show create table</th><th>explain</th><th>indexes</th><th>export</th><th>drop</th><th>truncate</th><th>optimize</th><th>repair</th><th>comment</th>";
@@ -215,7 +215,7 @@ function display_select($sth,$q){
  $swapper=false;
  while($row=mysqli_fetch_row($sth)){
    $sqldr.="<tr class='".$rc[$swp=!$swp]."' onclick='tc(this)'>";
-   $v=$row[0];
+   $v=htmlentities($row[0], ENT_QUOTES);
    if ($is_sht){
      $vq='`'.$v.'`';
      $url='?'.$xurl."&db=$dbn&t=".b64e($v);
@@ -452,11 +452,11 @@ function sht(f){
 <a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
 <?php if ($_SESSION['is_logged'] && $dbh){ ?>
  | <a href="?<?php eo($xurl)?>&q=<?=b64e("show databases");?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
-<?php echo htmlentities(get_db_select($dbn), ENT_QUOTES)?></select>
-<?php if($dbn){ $z=" &#183; <a href='".hs($self."?$xurl&db=$dbn"); ?>
-<?php echo htmlentities($z.'&q='.b64e($SHOW_T), ENT_QUOTES) ?>'>show tables</a>
-<?php echo htmlentities($z, ENT_QUOTES) ?>&shex=1'>export</a>
-<?php echo htmlentities($z, ENT_QUOTES) ?>&shim=1'>import</a>
+<?php echo get_db_select($dbn) ?></select>
+<?php if($dbn){ $z=" &#183; <a href='".hs($self . "?$xurl&db=" . htmlentities($dbn, ENT_QUOTES)); ?>
+<?php echo $z.'&q='.b64e($SHOW_T) ?>'>show tables</a>
+<?php echo $z ?>&shex=1'>export</a>
+<?php echo $z ?>&shim=1'>import</a>
 <?php } ?>
  | <a href="?showcfg=1">Settings</a>
 <?php } ?>
@@ -500,7 +500,7 @@ function print_screen(){
 Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_count){eo(' out of '.$last_count);}?></b> in <b><?php eo($time_all)?></b> sec<br>
 <b><?php eo($out_message)?></b>
 </div>
-<?php echo htmlentities($nav.$sqldr.$nav, ENT_QUOTES); ?>
+<?php echo $nav.$sqldr.$nav; ?>
 <?php
  print_footer();
 }
@@ -674,7 +674,7 @@ function sel($arr,$n,$sel=''){
  foreach($arr as $a){
 #   echo $a[0];
    $b=$a[$n];
-   $res.="<option value='$b' ".($sel && $sel==$b?'selected':'').">$b</option>";
+   $res.="<option value='$b' ".($sel && $sel==$b?'selected':'').">" . htmlentities($b, ENT_QUOTES) . "</option>";
  }
  return $res;
 }
@@ -999,7 +999,7 @@ function print_import(){
 .csv file (Excel style): <input type="file" name="file2" value="" size=40><br>
 <input type="checkbox" name="r1" value="1" checked> first row contain field names<br>
 <small>(note: for success, field names should be exactly the same as in DB)</small><br>
-Character set of the file: <select name="chset"><?php echo htmlentities(chset_select('utf8'), ENT_QUOTES)?></select>
+Character set of the file: <select name="chset"><?php echo chset_select('utf8'); ?></select>
 <br><br>
 Import into:<br>
 <input type="radio" name="tt" value="1" checked="checked"> existing table:
