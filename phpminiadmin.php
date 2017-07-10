@@ -206,7 +206,7 @@ function display_select($sth,$q){
  for($i=0;$i<$fields_num;$i++){
     if ($is_sht && $i>0) break;
     $meta=mysqli_fetch_field($sth);
-    $headers.="<th><div>".$meta->name."</div></th>";
+    $headers.="<th><div>".hs($meta->name)."</div></th>";
  }
  if ($is_shd) $headers.="<th>show create database</th><th>show table status</th><th>show triggers</th>";
  if ($is_sht) $headers.="<th>engine</th><th>~rows</th><th>data size</th><th>index size</th><th>show create table</th><th>explain</th><th>indexes</th><th>export</th><th>drop</th><th>truncate</th><th>optimize</th><th>repair</th><th>comment</th>";
@@ -215,7 +215,7 @@ function display_select($sth,$q){
  $swapper=false;
  while($row=mysqli_fetch_row($sth)){
    $sqldr.="<tr class='".$rc[$swp=!$swp]."' onclick='tc(this)'>";
-   $v=$row[0];
+   $v=hs($row[0]);
    if ($is_sht){
      $vq='`'.$v.'`';
      $url='?'.$xurl."&db=$dbn&t=".b64e($v);
@@ -422,7 +422,7 @@ function cfg_toggle(){
  e.style.display=e.style.display=='none'?'':'none';
 }
 function qtpl(s){
- $('qraw').value=s.replace(/%T/g,'`<?php echo $_REQUEST['t']?b64d($_REQUEST['t']):'tablename'?>`');
+ $('qraw').value=s.replace(/%T/g,'`<?php eo($_REQUEST['t']?b64d($_REQUEST['t']):'tablename')?>`');
 }
 function smview(){
  if($('is_sm').checked){$('res').className+=' sm'}else{$('res').className = $('res').className.replace(/\bsm\b/,' ')}
@@ -452,11 +452,11 @@ function sht(f){
 <a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
 <?php if ($_SESSION['is_logged'] && $dbh){ ?>
  | <a href="?<?php eo($xurl)?>&q=<?=b64e("show databases");?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
-<?php echo get_db_select($dbn)?></select>
-<?php if($dbn){ $z=" &#183; <a href='".hs($self."?$xurl&db=$dbn"); ?>
-<?php echo $z.'&q='.b64e($SHOW_T)?>'>show tables</a>
-<?php echo $z?>&shex=1'>export</a>
-<?php echo $z?>&shim=1'>import</a>
+<?php echo get_db_select($dbn) ?></select>
+<?php if($dbn){ $z=" &#183; <a href='".hs($self."?$xurl&db=".$dbn); ?>
+<?php echo $z.'&q='.b64e($SHOW_T) ?>'>show tables</a>
+<?php echo $z ?>&shex=1'>export</a>
+<?php echo $z ?>&shim=1'>import</a>
 <?php } ?>
  | <a href="?showcfg=1">Settings</a>
 <?php } ?>
@@ -542,7 +542,7 @@ function print_cfg(){
 <div id="cfg-adv" style="display:none;">
 <label><div class="l">DB name:</div><input type="text" name="v[db]" value="<?php eo($DB['db'])?>"></label><br>
 <label><div class="l">MySQL host:</div><input type="text" name="v[host]" value="<?php eo($DB['host'])?>"></label> <label>port: <input type="text" name="v[port]" value="<?php eo($DB['port'])?>" size="4"></label><br>
-<label><div class="l">Charset:</div><select name="v[chset]"><option value="">- default -</option><?php echo chset_select($DB['chset'])?></select></label><br>
+<label><div class="l">Charset:</div><select name="v[chset]"><option value="">- default -</option><?php eo(chset_select($DB['chset']))?></select></label><br>
 <br><label for ="rmb"><input type="checkbox" name="rmb" id="rmb" value="1" checked> Remember in cookies for 30 days or until Logoff</label>
 </div>
 <center>
@@ -674,7 +674,7 @@ function sel($arr,$n,$sel=''){
  foreach($arr as $a){
 #   echo $a[0];
    $b=$a[$n];
-   $res.="<option value='$b' ".($sel && $sel==$b?'selected':'').">$b</option>";
+   $res.="<option value='$b' ".($sel && $sel==$b?'selected':'').">".hs($b)."</option>";
  }
  return $res;
 }
@@ -958,7 +958,7 @@ function ex_w($s){
     if ($ex_issrv){
         fwrite($ex_f,$s);
     }else{
-        echo $s;
+        eo($s);
     }
  }
 }
@@ -999,13 +999,13 @@ function print_import(){
 .csv file (Excel style): <input type="file" name="file2" value="" size=40><br>
 <input type="checkbox" name="r1" value="1" checked> first row contain field names<br>
 <small>(note: for success, field names should be exactly the same as in DB)</small><br>
-Character set of the file: <select name="chset"><?php echo chset_select('utf8')?></select>
+Character set of the file: <select name="chset"><?php echo chset_select('utf8'); ?></select>
 <br><br>
 Import into:<br>
 <input type="radio" name="tt" value="1" checked="checked"> existing table:
  <select name="t">
  <option value=''>- select -</option>
- <?php echo sel(db_array('show tables',NULL,0,1), 0, ''); ?>
+ <?php eo(sel(db_array('show tables',NULL,0,1), 0, '')); ?>
 </select>
 <div style="margin-left:20px">
  <input type="checkbox" name="ttr" value="1"> replace existing DB data<br>
