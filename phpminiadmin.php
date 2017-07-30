@@ -9,136 +9,136 @@
  Dual licensed: GPL v2 and MIT, see texts at http://opensource.org/licenses/
 */
 
- $ACCESS_PWD=''; #!!!IMPORTANT!!! this is script access password, SET IT if you want to protect you DB from public access
+$ACCESS_PWD=''; #!!!IMPORTANT!!! this is script access password, SET IT if you want to protect you DB from public access
 
- #DEFAULT db connection settings
- # --- WARNING! --- if you set defaults - it's recommended to set $ACCESS_PWD to protect your db!
- $DBDEF=array(
- 'user'=>"",#required
- 'pwd'=>"", #required
- 'db'=>"",  #optional, default DB
- 'host'=>"",#optional
- 'port'=>"",#optional
- 'chset'=>"utf8",#optional, default charset
- );
- $IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
- $DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used for server-side exports (timestamp, .sql/.csv/.gz extension added) or imports(.sql)
+#DEFAULT db connection settings
+# --- WARNING! --- if you set defaults - it's recommended to set $ACCESS_PWD to protect your db!
+$DBDEF=array(
+'user'=>"",#required
+'pwd'=>"", #required
+'db'=>"",  #optional, default DB
+'host'=>"",#optional
+'port'=>"",#optional
+'chset'=>"utf8",#optional, default charset
+);
+$IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
+$DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used for server-side exports (timestamp, .sql/.csv/.gz extension added) or imports(.sql)
 file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read from config (easier to update)
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
- $VERSION='1.9.170703';
- $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
- $D="\r\n"; #default delimiter for export
- $BOM=chr(239).chr(187).chr(191);
- $SHOW_D="SHOW DATABASES";
- $SHOW_T="SHOW TABLE STATUS";
- $DB=array(); #working copy for DB settings
+$VERSION='1.9.170730';
+$MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
+$D="\r\n"; #default delimiter for export
+$BOM=chr(239).chr(187).chr(191);
+$SHOW_D="SHOW DATABASES";
+$SHOW_T="SHOW TABLE STATUS";
+$DB=array(); #working copy for DB settings
 
- $self=$_SERVER['PHP_SELF'];
+$self=$_SERVER['PHP_SELF'];
 
- session_set_cookie_params(0, null, null, false, true);
- session_start();
- if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
- $xurl='XSS='.$_SESSION['XSS'];
+session_set_cookie_params(0, null, null, false, true);
+session_start();
+if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
+$xurl='XSS='.$_SESSION['XSS'];
 
- ini_set('display_errors',0);  #turn on to debug db or script issues
- error_reporting(E_ALL ^ E_NOTICE);
+ini_set('display_errors',0);  #turn on to debug db or script issues
+error_reporting(E_ALL ^ E_NOTICE);
 
 //strip quotes if they set
- if (get_magic_quotes_gpc()){
+if (get_magic_quotes_gpc()){
   $_COOKIE=array_map('killmq',$_COOKIE);
   $_REQUEST=array_map('killmq',$_REQUEST);
- }
+}
 
- if ($_REQUEST['login']){
-    if ($_REQUEST['pwd']!=$ACCESS_PWD){
-       $err_msg="Invalid password. Try again";
-    }else{
-       $_SESSION['is_logged']=true;
-       loadcfg();
-    }
- }
+if ($_REQUEST['login']){
+  if ($_REQUEST['pwd']!=$ACCESS_PWD){
+    $err_msg="Invalid password. Try again";
+  }else{
+    $_SESSION['is_logged']=true;
+    loadcfg();
+  }
+}
 
- if ($_REQUEST['logoff']){
-    check_xss();
-    $_SESSION = array();
-    savecfg();
-    session_destroy();
-    $url=$self;
-    if (!$ACCESS_PWD) $url='/';
-    header("location: $url");
+if ($_REQUEST['logoff']){
+  check_xss();
+  $_SESSION = array();
+  savecfg();
+  session_destroy();
+  $url=$self;
+  if (!$ACCESS_PWD) $url='/';
+  header("location: $url");
+  exit;
+}
+
+if (!$_SESSION['is_logged']){
+  if (!$ACCESS_PWD) {
+    $_SESSION['is_logged']=true;
+    loadcfg();
+  }else{
+    print_login();
     exit;
- }
+  }
+}
 
- if (!$_SESSION['is_logged']){
-    if (!$ACCESS_PWD) {
-      $_SESSION['is_logged']=true;
-      loadcfg();
-    }else{
-      print_login();
-      exit;
+if ($_REQUEST['savecfg']){
+  check_xss();
+  savecfg();
+}
+
+loadsess();
+
+if ($_REQUEST['showcfg']){
+  print_cfg();
+  exit;
+}
+
+//get initial values
+$SQLq=trim(b64d($_REQUEST['q']));
+$page=$_REQUEST['p']+0;
+if ($_REQUEST['refresh'] && $DB['db'] && preg_match('/^show/',$SQLq) ) $SQLq=$SHOW_T;
+
+if (db_connect('nodie')){
+  $time_start=microtime_float();
+
+  if ($_REQUEST['pi']){
+    ob_start();phpinfo();$html=ob_get_clean();preg_match("/<body[^>]*>(.*?)<\/body>/is",$html,$m);
+    $sqldr='<div class="pi">'.$m[1].'</div>';
+  }else{
+   if ($DB['db']){
+    if ($_REQUEST['shex']){
+     print_export();
+    }elseif ($_REQUEST['doex']){
+     check_xss();do_export();
+    }elseif ($_REQUEST['shim']){
+     print_import();
+    }elseif ($_REQUEST['doim']){
+     check_xss();do_import();
+    }elseif ($_REQUEST['dosht']){
+     check_xss();do_sht();
+    }elseif (!$_REQUEST['refresh'] || preg_match('/^select|show|explain|desc/i',$SQLq) ){
+     if ($SQLq)check_xss();
+     do_sql($SQLq);#perform non-select SQL only if not refresh (to avoid dangerous delete/drop)
     }
- }
-
- if ($_REQUEST['savecfg']){
-    check_xss();
-    savecfg();
- }
-
- loadsess();
-
- if ($_REQUEST['showcfg']){
-    print_cfg();
-    exit;
- }
-
- //get initial values
- $SQLq=trim(b64d($_REQUEST['q']));
- $page=$_REQUEST['p']+0;
- if ($_REQUEST['refresh'] && $DB['db'] && preg_match('/^show/',$SQLq) ) $SQLq=$SHOW_T;
-
- if (db_connect('nodie')){
-    $time_start=microtime_float();
-
-    if ($_REQUEST['pi']){
-       ob_start();phpinfo();$html=ob_get_clean();preg_match("/<body[^>]*>(.*?)<\/body>/is",$html,$m);
-       $sqldr='<div class="pi">'.$m[1].'</div>';
+   }else{
+    if ( $_REQUEST['refresh'] ){
+       check_xss();do_sql($SHOW_D);
+    }elseif ($_REQUEST['crdb']){
+      check_xss();do_sql('CREATE DATABASE `'.$_REQUEST['new_db'].'`');do_sql($SHOW_D);
+    }elseif ( preg_match('/^(?:show\s+(?:databases|status|variables|process)|create\s+database|grant\s+)/i',$SQLq) ){
+       check_xss();do_sql($SQLq);
     }else{
-     if ($DB['db']){
-      if ($_REQUEST['shex']){
-       print_export();
-      }elseif ($_REQUEST['doex']){
-       check_xss();do_export();
-      }elseif ($_REQUEST['shim']){
-       print_import();
-      }elseif ($_REQUEST['doim']){
-       check_xss();do_import();
-      }elseif ($_REQUEST['dosht']){
-       check_xss();do_sht();
-      }elseif (!$_REQUEST['refresh'] || preg_match('/^select|show|explain|desc/i',$SQLq) ){
-       if ($SQLq)check_xss();
-       do_sql($SQLq);#perform non-select SQL only if not refresh (to avoid dangerous delete/drop)
-      }
-     }else{
-        if ( $_REQUEST['refresh'] ){
-           check_xss();do_sql($SHOW_D);
-        }elseif ($_REQUEST['crdb']){
-          check_xss();do_sql('CREATE DATABASE `'.$_REQUEST['new_db'].'`');do_sql($SHOW_D);
-        }elseif ( preg_match('/^(?:show\s+(?:databases|status|variables|process)|create\s+database|grant\s+)/i',$SQLq) ){
-           check_xss();do_sql($SQLq);
-        }else{
-           $err_msg="Select Database first";
-           if (!$SQLq) do_sql($SHOW_D);
-        }
-     }
+       $err_msg="Select Database first";
+       if (!$SQLq) do_sql($SHOW_D);
     }
-    $time_all=ceil((microtime_float()-$time_start)*10000)/10000;
+   }
+  }
+  $time_all=ceil((microtime_float()-$time_start)*10000)/10000;
 
-    print_screen();
- }else{
-    print_cfg();
- }
+  print_screen();
+}else{
+  print_cfg();
+}
 
 function do_sql($q){
  global $dbh,$last_sth,$last_sql,$reccount,$out_message,$SQLq,$SHOW_T;
@@ -165,7 +165,7 @@ function do_sql($q){
 function display_select($sth,$q){
  global $dbh,$DB,$sqldr,$reccount,$is_sht,$xurl,$is_sm;
  $rc=array("o","e");
- $dbn=$DB['db'];
+ $dbn=ue($DB['db']);
  $sqldr='';
 
  $is_shd=(preg_match('/^show\s+databases/i',$q));
@@ -183,12 +183,12 @@ function display_select($sth,$q){
    $url='?'.$xurl."&db=$dbn";
    $sqldr.="<div class='dot'>
  MySQL Server:
- &#183; <a href='$url&q=".b64e("show variables")."'>Show Configuration Variables</a>
- &#183; <a href='$url&q=".b64e("show status")."'>Show Statistics</a>
- &#183; <a href='$url&q=".b64e("show processlist")."'>Show Processlist</a> ";
+ &#183; <a href='$url&q=".b64u("show variables")."'>Show Configuration Variables</a>
+ &#183; <a href='$url&q=".b64u("show status")."'>Show Statistics</a>
+ &#183; <a href='$url&q=".b64u("show processlist")."'>Show Processlist</a> ";
    if ($is_shd) $sqldr.="&#183; <label>Create new database: <input type='text' name='new_db' placeholder='type db name here'></label> <input type='submit' name='crdb' value='Create'>";
    $sqldr.="<br>";
-   if ($is_sht) $sqldr.="Database: &#183; <a href='$url&q=".b64e("show table status")."'>Show Table Status</a>";
+   if ($is_sht) $sqldr.="Database: &#183; <a href='$url&q=".b64u("show table status")."'>Show Table Status</a>";
    $sqldr.="</div>";
  }
  if ($is_sht){
@@ -206,7 +206,7 @@ function display_select($sth,$q){
  for($i=0;$i<$fields_num;$i++){
     if ($is_sht && $i>0) break;
     $meta=mysqli_fetch_field($sth);
-    $headers.="<th><div>".$meta->name."</div></th>";
+    $headers.="<th><div>".hs($meta->name)."</div></th>";
  }
  if ($is_shd) $headers.="<th>show create database</th><th>show table status</th><th>show triggers</th>";
  if ($is_sht) $headers.="<th>engine</th><th>~rows</th><th>data size</th><th>index size</th><th>show create table</th><th>explain</th><th>indexes</th><th>export</th><th>drop</th><th>truncate</th><th>optimize</th><th>repair</th><th>comment</th>";
@@ -218,35 +218,33 @@ function display_select($sth,$q){
    $v=$row[0];
    if ($is_sht){
      $vq='`'.$v.'`';
-     $url='?'.$xurl."&db=$dbn&t=".b64e($v);
-     $v="<input type='checkbox' name='cb[]' value=\"$vq\"></td>"
-     ."<td><a href=\"$url&q=".b64e("select * from $vq")."\">$v</a></td>"
-     ."<td>".$row[1]."</td>"
-     ."<td align='right'>".$row[4]."</td>"
-     ."<td align='right'>".$row[6]."</td>"
-     ."<td align='right'>".$row[8]."</td>"
-     ."<td>&#183;<a href=\"$url&q=".b64e("show create table $vq")."\">sct</a></td>"
-     ."<td>&#183;<a href=\"$url&q=".b64e("explain $vq")."\">exp</a></td>"
-     ."<td>&#183;<a href=\"$url&q=".b64e("show index from $vq")."\">ind</a></td>"
-     ."<td>&#183;<a href=\"$url&shex=1&rt=$vq\">export</a></td>"
-     ."<td>&#183;<a href=\"$url&q=".b64e("drop table $vq")."\" onclick='return ays()'>dr</a></td>"
-     ."<td>&#183;<a href=\"$url&q=".b64e("truncate table $vq")."\" onclick='return ays()'>tr</a></td>"
-     ."<td>&#183;<a href=\"$url&q=".b64e("optimize table $vq")."\" onclick='return ays()'>opt</a></td>"
-     ."<td>&#183;<a href=\"$url&q=".b64e("repair table $vq")."\" onclick='return ays()'>rpr</a></td>"
-     ."<td>".hs($row[$fields_num-1]);
-     $sqldr.="<td>$v</td>";
+     $url='?'.$xurl."&db=$dbn&t=".b64u($v);
+     $sqldr.="<td><input type='checkbox' name='cb[]' value=\"".hs($vq)."\"></td>"
+     ."<td><a href=\"$url&q=".b64u("select * from $vq")."\">".hs($v)."</a></td>"
+     ."<td>".hs($row[1])."</td>"
+     ."<td align='right'>".hs($row[4])."</td>"
+     ."<td align='right'>".hs($row[6])."</td>"
+     ."<td align='right'>".hs($row[8])."</td>"
+     ."<td>&#183;<a href=\"$url&q=".b64u("show create table $vq")."\">sct</a></td>"
+     ."<td>&#183;<a href=\"$url&q=".b64u("explain $vq")."\">exp</a></td>"
+     ."<td>&#183;<a href=\"$url&q=".b64u("show index from $vq")."\">ind</a></td>"
+     ."<td>&#183;<a href=\"$url&shex=1&rt=".hs(ue($vq))."\">export</a></td>"
+     ."<td>&#183;<a href=\"$url&q=".b64u("drop table $vq")."\" onclick='return ays()'>dr</a></td>"
+     ."<td>&#183;<a href=\"$url&q=".b64u("truncate table $vq")."\" onclick='return ays()'>tr</a></td>"
+     ."<td>&#183;<a href=\"$url&q=".b64u("optimize table $vq")."\" onclick='return ays()'>opt</a></td>"
+     ."<td>&#183;<a href=\"$url&q=".b64u("repair table $vq")."\" onclick='return ays()'>rpr</a></td>"
+     ."<td>".hs($row[$fields_num-1])."</td>";
    }elseif ($is_shd){
-     $url='?'.$xurl."&db=$v";
-     $v="<a href=\"$url&q=".b64e("SHOW TABLE STATUS")."\">$v</a></td>"
-     ."<td><a href=\"$url&q=".b64e("show create database `$v`")."\">scd</a></td>"
-     ."<td><a href=\"$url&q=".b64e("show table status")."\">status</a></td>"
-     ."<td><a href=\"$url&q=".b64e("show triggers")."\">trig</a>";
-     $sqldr.="<td>$v</td>";
+     $url='?'.$xurl."&db=".ue($v);
+     $sqldr.="<td><a href=\"$url&q=".b64u("SHOW TABLE STATUS")."\">".hs($v)."</a></td>"
+     ."<td><a href=\"$url&q=".b64u("show create database `$v`")."\">scd</a></td>"
+     ."<td><a href=\"$url&q=".b64u("show table status")."\">status</a></td>"
+     ."<td><a href=\"$url&q=".b64u("show triggers")."\">trig</a></td>";
    }else{
      for($i=0;$i<$fields_num;$i++){
       $v=$row[$i];
-      if (is_null($v)) $v="NULL";
-      elseif (preg_match('/[\x00-\x09\x0B\x0C\x0E-\x1F]+/',$v)) { #all chars <32, except \n\r(0D0A)
+      if (is_null($v)) $v="<i>NULL</i>";
+      elseif (preg_match('/[\x00-\x09\x0B\x0C\x0E-\x1F]+/',$v)){#all chars <32, except \n\r(0D0A)
        $vl=strlen($v);$pf='';
        if ($vl>16 && $fields_num>1){#show full dump if just one field
          $v=substr($v, 0, 16);$pf='...';
@@ -451,10 +449,10 @@ function sht(f){
 <div class="inv">
 <a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
 <?php if ($_SESSION['is_logged'] && $dbh){ ?>
- | <a href="?<?php eo($xurl)?>&q=<?=b64e("show databases");?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
+ | <a href="?<?php eo($xurl.'&q='.b64u("show databases"))?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
 <?php echo get_db_select($dbn)?></select>
-<?php if($dbn){ $z=" &#183; <a href='".hs($self."?$xurl&db=$dbn"); ?>
-<?php echo $z.'&q='.b64e($SHOW_T)?>'>show tables</a>
+<?php if($dbn){ $z=" &#183; <a href='".hs($self."?$xurl&db=".ue($dbn)); ?>
+<?php echo $z.'&q='.b64u($SHOW_T)?>'>show tables</a>
 <?php echo $z?>&shex=1'>export</a>
 <?php echo $z?>&shim=1'>import</a>
 <?php } ?>
@@ -508,7 +506,7 @@ Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_cou
 function print_footer(){
 ?>
 </form>
-<div class="ft">&copy; 2004-2016 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
+<div class="ft">&copy; 2004-2017 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
 </body></html>
 <?php
 }
@@ -674,7 +672,7 @@ function sel($arr,$n,$sel=''){
  foreach($arr as $a){
 #   echo $a[0];
    $b=$a[$n];
-   $res.="<option value='$b' ".($sel && $sel==$b?'selected':'').">$b</option>";
+   $res.="<option value='".hs($b)."' ".($sel && $sel==$b?'selected':'').">".hs($b)."</option>";
  }
  return $res;
 }
@@ -836,7 +834,7 @@ function print_export(){
 <input type="hidden" name="rt" value="<?php eo($t)?>">
 <input type="submit" value=" Download ">
 <input type="submit" name="srv" value=" Dump on Server ">
-<input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
+<input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.ue($DB['db']))?>'">
 <p><small>"Dump on Server" exports to file:<br><?php eo(export_fname($DUMP_FILE).'.sql')?></small></p>
 </div>
 </center>
@@ -990,7 +988,7 @@ function print_import(){
 <div><label><input type="radio" name="it" value="gz"> import from file on server:<br>
  <?php eo($DUMP_FILE.'.sql.gz')?></label></div>
 <input type="hidden" name="doim" value="1">
-<input type="submit" value=" Import " onclick="return ays()"><input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.$DB['db'])?>'">
+<input type="submit" value=" Import " onclick="return ays()"><input type="button" value=" Cancel " onclick="window.location='<?php eo($self.'?'.$xurl.'&db='.ue($DB['db']))?>'">
 </div>
 <br><br><br>
 <!--
@@ -1268,9 +1266,15 @@ function hs($s){
 function eo($s){//echo+escape
   echo hs($s);
 }
+function ue($s){
+  return urlencode($s);
+}
 
 function b64e($s){
   return base64_encode($s);
+}
+function b64u($s){
+  return ue(base64_encode($s));
 }
 function b64d($s){
   return base64_decode($s);
