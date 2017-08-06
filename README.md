@@ -1,4 +1,4 @@
-![](http://phpminiadmin.sourceforge.net/img/scr_select_from_table.gif)
+![](http://phpminiadmin.sourceforge.net/img/scr_select.gif)
 
 [other screenshots are here](https://sourceforge.net/projects/phpminiadmin/#screenshots)
 
