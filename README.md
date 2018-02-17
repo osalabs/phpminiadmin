@@ -1,13 +1,14 @@
 ![](http://phpminiadmin.sourceforge.net/img/scr_select.gif)
 
-[other screenshots are here](https://sourceforge.net/projects/phpminiadmin/#screenshots)
+[other screenshots](https://sourceforge.net/projects/phpminiadmin/#screenshots)
 
 ## How to Install
-- Download phpminiadmin.php file
+- Download [phpminiadmin.php](https://raw.github.com/osalabs/phpminiadmin/master/phpminiadmin.php) file
+  - example: `wget https://raw.github.com/osalabs/phpminiadmin/master/phpminiadmin.php`
 - Copy/Upload it to your webserver public directory (www or public_html or whatever...)
-- Open in your browser http:// yoursite.com/phpminiadmin.php
+- Open in your browser `http://yoursite.com/phpminiadmin.php`
 
-For additional security you may edit phpminiadmin.php file and set some password (see $ACCESS_PWD variable)
+For additional security you may edit phpminiadmin.php file and set some password (see `$ACCESS_PWD` variable)
 
 ## Config file (optional)
 
