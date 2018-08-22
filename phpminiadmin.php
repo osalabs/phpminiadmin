@@ -1,7 +1,7 @@
 <?php
 /*
  PHP Mini MySQL Admin
- (c) 2004-2017 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
+ (c) 2004-2018 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
 
  Light standalone PHP script for quick and easy access MySQL databases.
  http://phpminiadmin.sourceforge.net
@@ -14,12 +14,12 @@ $ACCESS_PWD=''; #!!!IMPORTANT!!! this is script access password, SET IT if you w
 #DEFAULT db connection settings
 # --- WARNING! --- if you set defaults - it's recommended to set $ACCESS_PWD to protect your db!
 $DBDEF=array(
-'user'=>"",#required
-'pwd'=>"", #required
-'db'=>"",  #optional, default DB
-'host'=>"",#optional
-'port'=>"",#optional
-'chset'=>"utf8",#optional, default charset
+    'user'=>"",#required
+    'pwd'=>"", #required
+    'db'=>"",  #optional, default DB
+    'host'=>"localhost",#optional
+    'port'=> 3306,#optional
+    'chset'=>"utf8",#optional, default charset
 );
 $IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
 $DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used for server-side exports (timestamp, .sql/.csv/.gz extension added) or imports(.sql)
@@ -27,7 +27,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
-$VERSION='1.9.170730';
+$VERSION='1.9.170731';
 $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
 $D="\r\n"; #default delimiter for export
 $BOM=chr(239).chr(187).chr(191);
@@ -266,8 +266,11 @@ function print_header(){
 ?>
 <!DOCTYPE html>
 <html>
-<head><title>phpMiniAdmin</title>
+<head>
 <meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="googlebot" content="noindex">
+<title>phpMiniAdmin</title>
 <style type="text/css">
 *{box-sizing:border-box;}
 body{font-family:Arial,sans-serif;font-size:80%;padding:0;margin:0}
@@ -447,7 +450,7 @@ function sht(f){
 <input type="hidden" name="p" value="">
 
 <div class="inv">
-<a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
+<a href="https://github.com/osalabs/phpminiadmin" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
 <?php if ($_SESSION['is_logged'] && $dbh){ ?>
  | <a href="?<?php eo($xurl.'&q='.b64u("show databases"))?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
 <?php echo get_db_select($dbn)?></select>
@@ -506,7 +509,7 @@ Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_cou
 function print_footer(){
 ?>
 </form>
-<div class="ft">&copy; 2004-2017 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
+<div class="ft">&copy; 2004-2018 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
 </body></html>
 <?php
 }
@@ -534,12 +537,13 @@ function print_cfg(){
 <center>
 <h3>DB Connection Settings</h3>
 <div class="frm">
-<label><div class="l">DB user name:</div><input type="text" name="v[user]" value="<?php eo($DB['user'])?>"></label><br>
-<label><div class="l">Password:</div><input type="password" name="v[pwd]" value=""></label><br>
+<label><div class="l">MySQL host:</div><input type="text" name="v[host]" placeholder="localhost" value="<?php eo($DB['host'])?>" required></label><br>
+<label><div class="l">DB user name:</div><input type="text" name="v[user]" value="<?php eo($DB['user'])?>" required></label><br>
+<label><div class="l">Password:</div><input type="password" name="v[pwd]" value="" required></label><br>
 <div style="text-align:right"><a href="#" class="ajax" onclick="cfg_toggle()">advanced settings</a></div>
 <div id="cfg-adv" style="display:none;">
 <label><div class="l">DB name:</div><input type="text" name="v[db]" value="<?php eo($DB['db'])?>"></label><br>
-<label><div class="l">MySQL host:</div><input type="text" name="v[host]" value="<?php eo($DB['host'])?>"></label> <label>port: <input type="text" name="v[port]" value="<?php eo($DB['port'])?>" size="4"></label><br>
+<label><div class="l">Port: </div><input type="text" name="v[port]" value="<?php eo($DB['port'])?>" placeholder="3306" size="4"></label><br>
 <label><div class="l">Charset:</div><select name="v[chset]"><option value="">- default -</option><?php echo chset_select($DB['chset'])?></select></label><br>
 <br><label for ="rmb"><input type="checkbox" name="rmb" id="rmb" value="1" checked> Remember in cookies for 30 days or until Logoff</label>
 </div>
