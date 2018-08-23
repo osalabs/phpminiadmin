@@ -22,7 +22,7 @@ $DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used fo
 file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read from config (easier to update)
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 //constants
-$VERSION='1.9.170731';
+$VERSION='1.9.180823';
 $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
 $D="\r\n"; #default delimiter for export
 $BOM=chr(239).chr(187).chr(191);
