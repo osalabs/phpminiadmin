@@ -8,7 +8,13 @@
 - Copy/Upload it to your webserver public directory (www or public_html or whatever...)
 - Open in your browser `http://yoursite.com/phpminiadmin.php`
 
-For additional security you may edit phpminiadmin.php file and set some password (see `$ACCESS_PWD` variable)
+**Recommended:** For additional security you may edit phpminiadmin.php file and set some password (see `$ACCESS_PWD` variable)
+
+### Dependencies
+The only required php extension is `mysqli`. Therefore if you got a white screen install it:
+
+`sudo apt-get install php-mysql` on Debian
+or enable `extension=php_mysqli.dll` in php.ini on Windows
 
 ## Config file (optional)
 
