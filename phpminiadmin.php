@@ -1,7 +1,7 @@
 <?php
 /*
  PHP Mini MySQL Admin
- (c) 2004-2017 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
+ (c) 2004-2019 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
 
  Light standalone PHP script for quick and easy access MySQL databases.
  http://phpminiadmin.sourceforge.net
@@ -19,6 +19,7 @@ $DBDEF=array(
 'db'=>"",  #optional, default DB
 'host'=>"",#optional
 'port'=>"",#optional
+'socket'=>"",#optional
 'chset'=>"utf8",#optional, default charset
 );
 $IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
@@ -27,7 +28,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
-$VERSION='1.9.170730';
+$VERSION='1.9.190822';
 $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
 $D="\r\n"; #default delimiter for export
 $BOM=chr(239).chr(187).chr(191);
@@ -293,7 +294,7 @@ tr.e:hover, tr.o:hover{background-color:#FF9}
 tr.h{background-color:#99C}
 tr.s{background-color:#FF9}
 .err{color:#F33;font-weight:bold;text-align:center}
-.frm{width:400px;border:1px solid #999;background-color:#eee;text-align:left}
+.frm{width:450px;border:1px solid #999;background-color:#eee;text-align:left}
 .frm label .l{width:100px;float:left}
 .dot{border-bottom:1px dotted #000}
 .ajax{text-decoration:none;border-bottom: 1px dashed}
@@ -539,7 +540,7 @@ function print_cfg(){
 <div style="text-align:right"><a href="#" class="ajax" onclick="cfg_toggle()">advanced settings</a></div>
 <div id="cfg-adv" style="display:none;">
 <label><div class="l">DB name:</div><input type="text" name="v[db]" value="<?php eo($DB['db'])?>"></label><br>
-<label><div class="l">MySQL host:</div><input type="text" name="v[host]" value="<?php eo($DB['host'])?>"></label> <label>port: <input type="text" name="v[port]" value="<?php eo($DB['port'])?>" size="4"></label><br>
+<label><div class="l">MySQL host:</div><input type="text" name="v[host]" value="<?php eo($DB['host'])?>"></label> <label>port: <input type="text" name="v[port]" value="<?php eo($DB['port'])?>" size="4"></label> <label>socket: <input type="text" name="v[socket]" value="<?php eo($DB['socket'])?>" size="4"></label><br>
 <label><div class="l">Charset:</div><select name="v[chset]"><option value="">- default -</option><?php echo chset_select($DB['chset'])?></select></label><br>
 <br><label for ="rmb"><input type="checkbox" name="rmb" id="rmb" value="1" checked> Remember in cookies for 30 days or until Logoff</label>
 </div>
@@ -558,24 +559,15 @@ function print_cfg(){
 function db_connect($nodie=0){
  global $dbh,$DB,$err_msg;
 
- if ($DB['port']) {
-    $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd'],'',(int)$DB['port']);
- } else {
-    $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd']);
- }
+ $po=$DB['port'];if(!$po) $po=ini_get("mysqli.default_port");
+ $so=$DB['socket'];if(!$so) $so=ini_get("mysqli.default_socket");
+ $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd'],$DB['db'],$po,$so);
+
  if (!$dbh) {
     $err_msg='Cannot connect to the database because: '.mysqli_connect_error();
     if (!$nodie) die($err_msg);
- }
-
- if ($dbh && $DB['db']) {
-  $res=mysqli_select_db($dbh, $DB['db']);
-  if (!$res) {
-     $err_msg='Cannot select db because: '.mysqli_error($dbh);
-     if (!$nodie) die($err_msg);
-  }else{
-     if ($DB['chset']) db_query("SET NAMES ".$DB['chset']);
-  }
+ }else{
+  if ($DB['chset']) db_query("SET NAMES ".$DB['chset']);
  }
 
  return $dbh;
@@ -766,6 +758,7 @@ function savecfg(){
     newcookie("conn[pwd]", $v['pwd'],$tm);
     newcookie("conn[host]",$v['host'],$tm);
     newcookie("conn[port]",$v['port'],$tm);
+    newcookie("conn[socket]",$v['socket'],$tm);
     newcookie("conn[chset]",$v['chset'],$tm);
  }else{
     newcookie("conn[db]",  FALSE,-1);
@@ -773,6 +766,7 @@ function savecfg(){
     newcookie("conn[pwd]", FALSE,-1);
     newcookie("conn[host]",FALSE,-1);
     newcookie("conn[port]",FALSE,-1);
+    newcookie("conn[socket]",FALSE,-1);
     newcookie("conn[chset]",FALSE,-1);
  }
 }

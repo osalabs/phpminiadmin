@@ -9,6 +9,7 @@
  'db'=>'',  #optional, default DB
  'host'=>'',#optional
  'port'=>'',#optional
+ 'socket'=>'',#optional
  'chset'=>'utf8',#optional, default charset
  );
 
