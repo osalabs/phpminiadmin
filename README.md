@@ -38,7 +38,10 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 - [My website](http://osalabs.com)
 
 ## Change Log
-### changes in phpMiniAdmin 1.9.170730 (latest)
+### changes in phpMiniAdmin 1.9.190822 (latest)
+- added ability to set socket for db connection
+
+### changes in phpMiniAdmin 1.9.170730
 - fixed potential XSS in database names and fields [#28](https://github.com/osalabs/phpminiadmin/issues/28)
 - db NULLs now displayed in italic to distinguish from "NULL" text
 - misc formatting adjustments

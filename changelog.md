@@ -1,4 +1,7 @@
-### changes in phpMiniAdmin 1.9.170203 (latest)
+### changes in phpMiniAdmin 1.9.190822 (latest)
+- added ability to set socket for db connection
+
+### changes in phpMiniAdmin 1.9.170203
 - added "compact view" option. If checked - width/height of grid cells limited, so you can see more rows/columns in case your data is large. And in this mode you can double-click on cells to "expand" just that particular cell.
 
 ### changes in phpMiniAdmin 1.9.170117
