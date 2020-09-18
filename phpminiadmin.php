@@ -478,7 +478,14 @@ function print_screen(){
 
  print_header();
 ?>
-
+<?php if(!empty($_REQUEST['db'])){ ?>
+<div class="dot">
+<?php 
+echo 'Database: <b>'.hs($_REQUEST['db']).'</b>';
+echo (isset($_REQUEST['t'])) ? ' | Table: <b>'.hs(b64d($_REQUEST['t'])).'</b>' : '';
+?>
+</div>
+<?php } ?>
 <div class="dot" style="padding:3px 20px">
 <label for="qraw">SQL-query (or multiple queries separated by ";"):</label>&nbsp;<button type="button" class="qnav" onclick="q_prev()">&lt;</button><button type="button" class="qnav" onclick="q_next()">&gt;</button><br>
 <textarea id="qraw" cols="70" rows="10"><?php eo($SQLq)?></textarea><br>
