@@ -38,7 +38,11 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 - [My website](http://osalabs.com)
 
 ## Change Log
-### changes in phpMiniAdmin 1.9.190822 (latest)
+
+### changes in phpMiniAdmin 1.9.200928 (latest)
+- added ability to setup SSL connection (define at least "ssl_ca" in `$DBDEF`)
+
+### changes in phpMiniAdmin 1.9.190822
 - added ability to set socket for db connection
 
 ### changes in phpMiniAdmin 1.9.170730
@@ -51,11 +55,6 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 
 ### changes in phpMiniAdmin 1.9.170117
 - greatly optimized memory usage for large result sets (especially in export)
-
-### changes in phpMiniAdmin 1.9.161116
-- added ability to dump exports right on server, without need to download
-- added ability to import from .sql or .gz file right on server, without need to upload one
-- fixed export, now it won't dump data for VIEWs
 
 [see older changes in changelog](changelog.md)
 

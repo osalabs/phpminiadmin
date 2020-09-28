@@ -16,11 +16,16 @@ $ACCESS_PWD=''; #!!!IMPORTANT!!! this is script access password, SET IT if you w
 $DBDEF=array(
 'user'=>"",#required
 'pwd'=>"", #required
-'db'=>"",  #optional, default DB
-'host'=>"",#optional
-'port'=>"",#optional
-'socket'=>"",#optional
+#optional:
+'db'=>"",  #default DB
+'host'=>"",
+'port'=>"",
+'socket'=>"",
 'chset'=>"utf8",#optional, default charset
+#optional paths for ssl
+'ssl_key'=>NULL,
+'ssl_cert'=>NULL,
+'ssl_ca'=>'',#minimum this is required for ssl connections, if set - ssl connection will try to be established. Example: /path/to/cacert.pem
 );
 $IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
 $DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used for server-side exports (timestamp, .sql/.csv/.gz extension added) or imports(.sql)
@@ -28,7 +33,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
-$VERSION='1.9.190822';
+$VERSION='1.9.200928';
 $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
 $D="\r\n"; #default delimiter for export
 $BOM=chr(239).chr(187).chr(191);
@@ -80,8 +85,8 @@ if (!$_SESSION['is_logged']){
     print_login();
     exit;
   }
-}
 
+}
 if ($_REQUEST['savecfg']){
   check_xss();
   savecfg();
@@ -96,7 +101,7 @@ if ($_REQUEST['showcfg']){
 
 //get initial values
 $SQLq=trim(b64d($_REQUEST['q']));
-$page=$_REQUEST['p']+0;
+$page=intval($_REQUEST['p']);
 if ($_REQUEST['refresh'] && $DB['db'] && preg_match('/^show/',$SQLq) ) $SQLq=$SHOW_T;
 
 if (db_connect('nodie')){
@@ -561,8 +566,14 @@ function db_connect($nodie=0){
 
  $po=$DB['port'];if(!$po) $po=ini_get("mysqli.default_port");
  $so=$DB['socket'];if(!$so) $so=ini_get("mysqli.default_socket");
- $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd'],$DB['db'],$po,$so);
-
+ if ($DB['ssl_ca']){#ssl connection
+  $dbh=mysqli_init();
+  mysqli_options($dbh,MYSQLI_OPT_SSL_VERIFY_SERVER_CERT,true);
+  mysqli_ssl_set($dbh,$DB['ssl_key'],$DB['ssl_cert'],$DB['ssl_ca'],NULL,NULL);
+  if (!mysqli_real_connect($dbh,$DB['host'],$DB['user'],$DB['pwd'],$DB['db'],$po,$so,MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT)) $dbh=null;
+ }else{#non-ssl
+  $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd'],$DB['db'],$po,$so);
+ }
  if (!$dbh) {
     $err_msg='Cannot connect to the database because: '.mysqli_connect_error();
     if (!$nodie) die($err_msg);
@@ -747,8 +758,10 @@ function killmq($value){
 }
 
 function savecfg(){
+ global $DBDEF;
  $v=$_REQUEST['v'];
- $_SESSION['DB']=$v;
+ unset($v['ssl_ca']);unset($v['ssl_key']);unset($v['ssl_cert']);#don't allow override ssl paths from web
+ $_SESSION['DB']=array_merge($DBDEF,$v);
  unset($_SESSION['sql_sd']);
 
  if ($_REQUEST['rmb']){
@@ -779,7 +792,7 @@ function loadcfg(){
  global $DBDEF;
 
  if( isset($_COOKIE['conn']) ){
-    $_SESSION['DB']=$_COOKIE['conn'];
+    $_SESSION['DB']=array_merge($DBDEF,$_COOKIE['conn']);
  }else{
     $_SESSION['DB']=$DBDEF;
  }

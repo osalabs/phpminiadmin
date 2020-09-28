@@ -11,5 +11,9 @@
  'port'=>'',#optional
  'socket'=>'',#optional
  'chset'=>'utf8',#optional, default charset
+ #optional paths for ssl
+ 'ssl_key'=>NULL,
+ 'ssl_cert'=>NULL,
+ 'ssl_ca'=>"",#minimum this is required for ssl connections, if set - ssl connection will try to be established. Example: /path/to/cacert.pem
  );
 

@@ -1,4 +1,7 @@
-### changes in phpMiniAdmin 1.9.190822 (latest)
+### changes in phpMiniAdmin 1.9.200928 (latest)
+- added ability to setup SSL connection (define at least "ssl_ca" in `$DBDEF`)
+
+### changes in phpMiniAdmin 1.9.190822
 - added ability to set socket for db connection
 
 ### changes in phpMiniAdmin 1.9.170203
