@@ -33,7 +33,7 @@ file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read f
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
-$VERSION='1.9.200928';
+$VERSION='1.9.210129';
 $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
 $D="\r\n"; #default delimiter for export
 $BOM=chr(239).chr(187).chr(191);
@@ -864,6 +864,7 @@ function do_export(){
  $z=db_row("show variables like 'max_allowed_packet'");
  $MAXI=floor($z['Value']*0.8);
  if(!$MAXI)$MAXI=838860;
+ $MAXI=min($MAXI,16777216);
  $aext='';$ctp='';
 
  $ex_super=($_REQUEST['sp'])?1:0;

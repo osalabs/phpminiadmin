@@ -1,4 +1,7 @@
-### changes in phpMiniAdmin 1.9.200928 (latest)
+### changes in phpMiniAdmin 1.9.210129 (latest)
+- limited max packet size during export to aviod PHP memory exhausted errors on huge tables
+
+### changes in phpMiniAdmin 1.9.200928
 - added ability to setup SSL connection (define at least "ssl_ca" in `$DBDEF`)
 
 ### changes in phpMiniAdmin 1.9.190822
@@ -70,8 +73,4 @@
 - fixed: unable to relogin on XSS error
 - fixed: truncate button doesn't work
 - minor changes in text labels and css styles
-
-### changes in phpMiniAdmin 1.7.110429
-
-- added: import/export to/from gzip compressed files (.gz)
 
