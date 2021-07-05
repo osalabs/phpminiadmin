@@ -1,4 +1,9 @@
-### changes in phpMiniAdmin 1.9.210129 (latest)
+### changes in phpMiniAdmin 1.9.210705 (latest)
+- removed use of function `get_magic_quotes_gpc` deprecated since PHP 7.4.0
+- utf8mb4 is now default charset
+- tested in PHP 8, cleaned up several PHP Warnings
+
+### changes in phpMiniAdmin 1.9.210129
 - limited max packet size during export to aviod PHP memory exhausted errors on huge tables
 
 ### changes in phpMiniAdmin 1.9.200928
