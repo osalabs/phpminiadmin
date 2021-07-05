@@ -1,4 +1,12 @@
-### changes in phpMiniAdmin 1.9.200928 (latest)
+### changes in phpMiniAdmin 1.9.210705 (latest)
+- removed use of function `get_magic_quotes_gpc` deprecated since PHP 7.4.0
+- utf8mb4 is now default charset
+- tested in PHP 8, cleaned up several PHP Warnings
+
+### changes in phpMiniAdmin 1.9.210129
+- limited max packet size during export to aviod PHP memory exhausted errors on huge tables
+
+### changes in phpMiniAdmin 1.9.200928
 - added ability to setup SSL connection (define at least "ssl_ca" in `$DBDEF`)
 
 ### changes in phpMiniAdmin 1.9.190822
@@ -70,8 +78,4 @@
 - fixed: unable to relogin on XSS error
 - fixed: truncate button doesn't work
 - minor changes in text labels and css styles
-
-### changes in phpMiniAdmin 1.7.110429
-
-- added: import/export to/from gzip compressed files (.gz)
 

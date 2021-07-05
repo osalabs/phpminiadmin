@@ -10,7 +10,7 @@
  'host'=>'',#optional
  'port'=>'',#optional
  'socket'=>'',#optional
- 'chset'=>'utf8',#optional, default charset
+ 'chset'=>'utf8mb4',#optional, default charset
  #optional paths for ssl
  'ssl_key'=>NULL,
  'ssl_cert'=>NULL,

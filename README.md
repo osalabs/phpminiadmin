@@ -39,7 +39,15 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 
 ## Change Log
 
-### changes in phpMiniAdmin 1.9.200928 (latest)
+### changes in phpMiniAdmin 1.9.210705 (latest)
+- removed use of function `get_magic_quotes_gpc` deprecated since PHP 7.4.0
+- utf8mb4 is now default charset
+- tested in PHP 8, cleaned up several PHP Warnings
+
+### changes in phpMiniAdmin 1.9.210129
+- limited max packet size during export to aviod PHP memory exhausted errors on huge tables
+
+### changes in phpMiniAdmin 1.9.200928
 - added ability to setup SSL connection (define at least "ssl_ca" in `$DBDEF`)
 
 ### changes in phpMiniAdmin 1.9.190822
@@ -49,12 +57,6 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 - fixed potential XSS in database names and fields [#28](https://github.com/osalabs/phpminiadmin/issues/28)
 - db NULLs now displayed in italic to distinguish from "NULL" text
 - misc formatting adjustments
-
-### changes in phpMiniAdmin 1.9.170203
-- added "compact view" option. If checked - width/height of grid cells limited, so you can see more rows/columns in case your data is large. And in this mode you can double-click on cells to "expand" just that particular cell.
-
-### changes in phpMiniAdmin 1.9.170117
-- greatly optimized memory usage for large result sets (especially in export)
 
 [see older changes in changelog](changelog.md)
 
