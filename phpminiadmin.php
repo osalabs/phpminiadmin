@@ -29,7 +29,6 @@ $DBDEF=array(
 );
 $IS_COUNT=false; #set to true if you want to see Total records when pagination occurs (SLOWS down all select queries!)
 $DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used for server-side exports (timestamp, .sql/.csv/.gz extension added) or imports(.sql)
-file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read from config (easier to update)
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
@@ -45,35 +44,39 @@ $self=$_SERVER['PHP_SELF'];
 
 session_set_cookie_params(0, null, null, false, true);
 session_start();
-if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
-$xurl='XSS='.$_SESSION['XSS'];
+if (!isset($_SESSION['pmAdmin']['XSS'])) $_SESSION['pmAdmin']['XSS']=get_rand_str(16);
+$xurl='XSS='.$_SESSION['pmAdmin']['XSS'];
 
 ini_set('display_errors',0);  #turn on to debug db or script issues
 error_reporting(E_ALL ^ E_NOTICE);
+
+file_exists($f=dirname(__FILE__) . '/phpminiconfig.php')&&require($f); // Read from config (easier to update)
+if(isset($authPage) AND $authPage != "" AND file_exists($authPage))
+  include_once($authPage); // If authPage exist, include it
 
 if ($_REQUEST['login']){
   if ($_REQUEST['pwd']!=$ACCESS_PWD){
     $err_msg="Invalid password. Try again";
   }else{
-    $_SESSION['is_logged']=true;
+    $_SESSION['pmAdmin']['is_logged']=true;
     loadcfg();
   }
 }
 
 if ($_REQUEST['logoff']){
   check_xss();
-  $_SESSION = array();
+  $_SESSION['pmAdmin'] = array();
   savecfg();
-  session_destroy();
+  unset($_SESSION['pmAdmin']); // instead of session_destroy();
   $url=$self;
   if (!$ACCESS_PWD) $url='/';
   header("location: $url");
   exit;
 }
 
-if (!$_SESSION['is_logged']){
+if (!$_SESSION['pmAdmin']['is_logged']){
   if (!$ACCESS_PWD) {
-    $_SESSION['is_logged']=true;
+    $_SESSION['pmAdmin']['is_logged']=true;
     loadcfg();
   }else{
     print_login();
@@ -444,13 +447,13 @@ function sht(f){
 </head>
 <body onload="after_load()">
 <form method="post" name="DF" id="DF" action="<?php eo($self)?>" enctype="multipart/form-data">
-<input type="hidden" name="XSS" value="<?php eo($_SESSION['XSS'])?>">
+<input type="hidden" name="XSS" value="<?php eo($_SESSION['pmAdmin']['XSS'])?>">
 <input type="hidden" name="refresh" value="">
 <input type="hidden" name="p" value="">
 
 <div class="inv">
 <a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
-<?php if ($_SESSION['is_logged'] && $dbh){ ?>
+<?php if ($_SESSION['pmAdmin']['is_logged'] && $dbh){ ?>
  | <a href="?<?php eo($xurl.'&q='.b64u("show databases"))?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>
 <?php echo get_db_select($dbn)?></select>
 <?php if($dbn){ $z=" &#183; <a href='".hs($self."?$xurl&db=".ue($dbn)); ?>
@@ -460,7 +463,7 @@ function sht(f){
 <?php } ?>
  | <a href="?showcfg=1">Settings</a>
 <?php } ?>
-<?php if ($_SESSION['is_logged']){?> | <a href="?<?php eo($xurl)?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
+<?php if ($_SESSION['pmAdmin']['is_logged']){?> | <a href="?<?php eo($xurl)?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
  | <a href="?pi=1">phpinfo</a>
 </div>
 
@@ -641,14 +644,14 @@ function get_identity($dbh1=NULL){
 
 function get_db_select($sel=''){
  global $DB,$SHOW_D;
- if (is_array($_SESSION['sql_sd']) && $_REQUEST['db']!='*'){//check cache
-    $arr=$_SESSION['sql_sd'];
+ if (is_array($_SESSION['pmAdmin']['sql_sd']) && $_REQUEST['db']!='*'){//check cache
+    $arr=$_SESSION['pmAdmin']['sql_sd'];
  }else{
    $arr=db_array($SHOW_D,NULL,1);
    if (!is_array($arr)){
       $arr=array( 0 => array('Database' => $DB['db']) );
     }
-   $_SESSION['sql_sd']=$arr;
+   $_SESSION['pmAdmin']['sql_sd']=$arr;
  }
  return @sel($arr,'Database',$sel);
 }
@@ -656,12 +659,12 @@ function get_db_select($sel=''){
 function chset_select($sel=''){
  global $DBDEF;
  $result='';
- if ($_SESSION['sql_chset']){
-    $arr=$_SESSION['sql_chset'];
+ if ($_SESSION['pmAdmin']['sql_chset']){
+    $arr=$_SESSION['pmAdmin']['sql_chset'];
  }else{
    $arr=db_array("show character set",NULL,1);
    if (!is_array($arr)) $arr=array(array('Charset'=>$DBDEF['chset']));
-   $_SESSION['sql_chset']=$arr;
+   $_SESSION['pmAdmin']['sql_chset']=$arr;
  }
 
  return @sel($arr,'Charset',$sel);
@@ -754,8 +757,8 @@ function savecfg(){
  $v=$_REQUEST['v'];
  if(!is_array($v))$v=array();
  unset($v['ssl_ca']);unset($v['ssl_key']);unset($v['ssl_cert']);#don't allow override ssl paths from web
- $_SESSION['DB']=array_merge($DBDEF,$v);
- unset($_SESSION['sql_sd']);
+ $_SESSION['pmAdmin']['DB']=array_merge($DBDEF,$v);
+ unset($_SESSION['pmAdmin']['sql_sd']);
 
  if ($_REQUEST['rmb']){
     $tm=time()+60*60*24*30;
@@ -785,26 +788,26 @@ function loadcfg(){
  global $DBDEF;
 
  if( isset($_COOKIE['conn']) ){
-    $_SESSION['DB']=array_merge($DBDEF,$_COOKIE['conn']);
+    $_SESSION['pmAdmin']['DB']=array_merge($DBDEF,$_COOKIE['conn']);
  }else{
-    $_SESSION['DB']=$DBDEF;
+    $_SESSION['pmAdmin']['DB']=$DBDEF;
  }
- if (!strlen($_SESSION['DB']['chset'])) $_SESSION['DB']['chset']=$DBDEF['chset'];#don't allow empty charset
+ if (!strlen($_SESSION['pmAdmin']['DB']['chset'])) $_SESSION['pmAdmin']['DB']['chset']=$DBDEF['chset'];#don't allow empty charset
 }
 
 //each time - from session to $DB_*
 function loadsess(){
  global $DB, $is_sm;
 
- $DB=$_SESSION['DB'];
+ $DB=$_SESSION['pmAdmin']['DB'];
 
  $rdb=$_REQUEST['db'];
  if ($rdb=='*') $rdb='';
  if ($rdb) {
     $DB['db']=$rdb;
  }
- if($_REQUEST['GoSQL']) $_SESSION['is_sm']=$_REQUEST['is_sm']+0;
- $is_sm=$_SESSION['is_sm']+0;
+ if($_REQUEST['GoSQL']) $_SESSION['pmAdmin']['is_sm']=$_REQUEST['is_sm']+0;
+ $is_sm=$_SESSION['pmAdmin']['is_sm']+0;
 }
 
 function print_export(){
@@ -1236,8 +1239,8 @@ function get_rand_str($len){
 
 function check_xss(){
  global $self;
- if ($_SESSION['XSS']!=trim($_REQUEST['XSS'])){
-    unset($_SESSION['XSS']);
+ if ($_SESSION['pmAdmin']['XSS']!=trim($_REQUEST['XSS'])){
+    unset($_SESSION['pmAdmin']['XSS']);
     header("location: $self");
     exit;
  }
