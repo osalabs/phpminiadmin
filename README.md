@@ -39,24 +39,22 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 
 ## Change Log
 
-### changes in phpMiniAdmin 1.9.210705 (latest)
+### changes in phpMiniAdmin 1.9.240727 (latest)
+- support for PHP 8.3 (cleaned up some PHP Warnings, deprecations)
+- enhancements:
+  - multiple db servers support - define server's configs via `$DBSERVERS` and quickly switch between servers via top navbar dropdown
+  - "ps" menu item in top navbar - shortcut for "show processlist"
+  - "SHOW TABLE STATUS" now works quicker because emulated via select from `information_schema.TABLES`
+  - "WITH" (Common Table Expressions (CTEs)) support
+  - moved include for phpminiconfig a bit further, so it allows override more things
+- security improvements:
+  - `$ACCESS_PWD` now is enforced except for local usage
+  - added by default "SET GLOBAL local_infile=0" to prevent unwanted use of `LOAD DATA LOCAL INFILE`. Controlled by `$IS_LOCAL_INFILE` on the beginning of the script.
+
+### changes in phpMiniAdmin 1.9.210705
 - removed use of function `get_magic_quotes_gpc` deprecated since PHP 7.4.0
 - utf8mb4 is now default charset
 - tested in PHP 8, cleaned up several PHP Warnings
-
-### changes in phpMiniAdmin 1.9.210129
-- limited max packet size during export to aviod PHP memory exhausted errors on huge tables
-
-### changes in phpMiniAdmin 1.9.200928
-- added ability to setup SSL connection (define at least "ssl_ca" in `$DBDEF`)
-
-### changes in phpMiniAdmin 1.9.190822
-- added ability to set socket for db connection
-
-### changes in phpMiniAdmin 1.9.170730
-- fixed potential XSS in database names and fields [#28](https://github.com/osalabs/phpminiadmin/issues/28)
-- db NULLs now displayed in italic to distinguish from "NULL" text
-- misc formatting adjustments
 
 [see older changes in changelog](changelog.md)
 

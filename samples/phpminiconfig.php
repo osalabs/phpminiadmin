@@ -17,3 +17,14 @@
  'ssl_ca'=>"",#minimum this is required for ssl connections, if set - ssl connection will try to be established. Example: /path/to/cacert.pem
  );
 
+ #EXAMPLE for multiple db servers
+ $DBSERVERS = array(
+   [
+     'iname'  => 'localhost',  #just a visible name
+     'config' => $DBDEF,       #server connection config - same structure as $DBDEF
+   ],
+   [
+     'iname'  => 'localhost2',
+     'config' => $DBDEF,
+   ],
+ );
