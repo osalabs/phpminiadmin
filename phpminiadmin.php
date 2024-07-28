@@ -602,7 +602,7 @@ function db_connect($nodie=0){
     if (!$nodie) die($err_msg);
  }else{
   if ($DB['chset']) db_query("SET NAMES ".$DB['chset']);
-  db_query("SET GLOBAL local_infile=".intval($IS_LOCAL_INFILE));
+  db_query("SET GLOBAL local_infile=".intval($IS_LOCAL_INFILE),NULL,1);
  }
 
  return $dbh;
