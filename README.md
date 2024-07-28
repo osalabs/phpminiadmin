@@ -32,9 +32,9 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 ## Links
 - [Screenshots](http://sourceforge.net/project/screenshots.php?group_id=181023)
 - [Live demo](http://phpminiadmin.sourceforge.net/phpminiadmin.php) (pwd: pmaiscool)
-- [Download latest version](https://sourceforge.net/projects/phpminiadmin/files/latest)
+- [Download latest version](https://raw.githubusercontent.com/osalabs/phpminiadmin/master/phpminiadmin.php)
 - [SourceForge page of the phpMiniAdmin](http://phpminiadmin.sourceforge.net/)
-- [My Twitter](http://twitter.com/#!/osalabs)
+- [My X/Twitter](https://x.com/osalabs)
 - [My website](http://osalabs.com)
 
 ## Change Log
