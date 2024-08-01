@@ -34,7 +34,7 @@ $DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used fo
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
-$VERSION='1.9.240727';
+$VERSION='1.9.240801';
 $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
 $D="\r\n"; #default delimiter for export
 $BOM=chr(239).chr(187).chr(191);
@@ -474,7 +474,7 @@ function sht(f){
  if ($DBSERVERS){?>
  | Servers: <select name="srv" onChange="frefresh()"><option value=''>- select/refresh -</option>
 <?php echo @sel($DBSERVERS,'iname',$SRV)?></select>
-<?}
+<?php }
 ?>
 &#183; <a href="?<?php eo("$xurl&db=".ue($dbn)."&srv=".ue($SRV).'&q='.b64u("show processlist"))?>">ps</a>
  | <a href="?<?php eo($xurl.'&q='.b64u("show databases"))?>">Databases</a>: <select name="db" onChange="frefresh()"><option value='*'> - select/refresh -</option><option value=''> - show all -</option>

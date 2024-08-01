@@ -39,7 +39,10 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 
 ## Change Log
 
-### changes in phpMiniAdmin 1.9.240727 (latest)
+### changes in phpMiniAdmin 1.9.240801 (latest)
+- fixed one php short open tag
+
+### changes in phpMiniAdmin 1.9.240727
 - support for PHP 8.3 (cleaned up some PHP Warnings, deprecations)
 - enhancements:
   - multiple db servers support - define server's configs via `$DBSERVERS` and quickly switch between servers via top navbar dropdown
