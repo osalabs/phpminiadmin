@@ -1,4 +1,10 @@
-### changes in phpMiniAdmin 1.9.240727 (latest)
+### changes in phpMiniAdmin 1.9.251125 (latest)
+- reverted back from str_starts_with to strpos to support PHP 7
+
+### changes in phpMiniAdmin 1.9.240801
+- fixed one php short open tag
+
+### changes in phpMiniAdmin 1.9.240727
 - support for PHP 8.3 (cleaned up some PHP Warnings, deprecations)
 - enhancements:
   - multiple db servers support - define server's configs via `$DBSERVERS` and quickly switch between servers via top navbar dropdown
@@ -90,4 +96,3 @@
 - fixed: unable to relogin on XSS error
 - fixed: truncate button doesn't work
 - minor changes in text labels and css styles
-

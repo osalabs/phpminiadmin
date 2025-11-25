@@ -1,7 +1,7 @@
 <?php
 /*
  PHP Mini MySQL Admin
- (c) 2004-2024 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
+ (c) 2004-2025 Oleg Savchuk <osalabs@gmail.com> http://osalabs.com
 
  Light standalone PHP script for quick and easy access MySQL databases.
  http://phpminiadmin.sourceforge.net
@@ -34,7 +34,7 @@ $DUMP_FILE=dirname(__FILE__).'/pmadump'; #path to file without extension used fo
 if (function_exists('date_default_timezone_set')) date_default_timezone_set('UTC');#required by PHP 5.1+
 
 //constants
-$VERSION='1.9.240801';
+$VERSION='1.9.251125';
 $MAX_ROWS_PER_PAGE=50; #max number of rows in select per one page
 $D="\r\n"; #default delimiter for export
 $BOM=chr(239).chr(187).chr(191);
@@ -915,7 +915,7 @@ function do_export(){
  if ($ct==1&&($_REQUEST['et']??'')=='csv'){
   ex_start('.csv');
   ex_hdr($ctp?:'text/csv',"$t[0].csv$aext");
-  if (str_starts_with($DB['chset'],'utf8')) ex_w($BOM);
+  if (strpos($DB['chset']??'','utf8')===0) ex_w($BOM);
 
   $sth=db_query("select * from ".dbqid($t[0]),NULL,0,MYSQLI_USE_RESULT);
   $fn=mysqli_field_count($dbh);

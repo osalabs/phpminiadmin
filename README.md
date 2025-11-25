@@ -39,7 +39,10 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 
 ## Change Log
 
-### changes in phpMiniAdmin 1.9.240801 (latest)
+### changes in phpMiniAdmin 1.9.251125 (latest)
+- reverted back from str_starts_with to strpos to support PHP 7
+
+### changes in phpMiniAdmin 1.9.240801
 - fixed one php short open tag
 
 ### changes in phpMiniAdmin 1.9.240727
@@ -54,10 +57,4 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
   - `$ACCESS_PWD` now is enforced except for local usage
   - added by default "SET GLOBAL local_infile=0" to prevent unwanted use of `LOAD DATA LOCAL INFILE`. Controlled by `$IS_LOCAL_INFILE` on the beginning of the script.
 
-### changes in phpMiniAdmin 1.9.210705
-- removed use of function `get_magic_quotes_gpc` deprecated since PHP 7.4.0
-- utf8mb4 is now default charset
-- tested in PHP 8, cleaned up several PHP Warnings
-
 [see older changes in changelog](changelog.md)
-
