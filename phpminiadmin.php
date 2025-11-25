@@ -678,9 +678,11 @@ function get_db_select($sel=''){
     $arr=$_SESSION['sql_sd'];
  }else{
    $arr=db_array($SHOW_D,NULL,1);
-   if (!is_array($arr)){
-      $arr=[0 => array('Database' => $DB['db'])];
-    }
+   if (!is_array($arr) || !$arr){
+      $cur=db_value("SELECT DATABASE()",NULL,1);
+      if (!$cur) $cur=$DB['db'];
+      $arr=[['Database'=>$cur]];
+   }
    $_SESSION['sql_sd']=$arr;
  }
  return @sel($arr,'Database',$sel);
