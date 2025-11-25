@@ -49,8 +49,14 @@ $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
 ini_set('session.use_only_cookies', 1);
 @session_start();
 
-if (!isset($_SESSION['XSS'])) $_SESSION['XSS']=get_rand_str(16);
-$xurl='XSS='.$_SESSION['XSS'];
+if (!isset($_SESSION['phpMiniAdmin'])) $_SESSION['phpMiniAdmin']=[];
+function sget($k,$d=NULL){return $_SESSION['phpMiniAdmin'][$k]??$d;}
+function sset($k,$v){$_SESSION['phpMiniAdmin'][$k]=$v;}
+function sdel($k){unset($_SESSION['phpMiniAdmin'][$k]);}
+function sclear(){$_SESSION['phpMiniAdmin']=[];}
+
+if (!sget('XSS')) sset('XSS', get_rand_str(16));
+$xurl='XSS='.sget('XSS');
 
 ini_set('display_errors',0);  #turn on to debug db or script issues
 error_reporting(E_ALL ^ E_NOTICE);
@@ -61,26 +67,25 @@ if(isset($_REQUEST['login'])){
   if ($_REQUEST['pwd']!=$ACCESS_PWD){
     $err_msg="Invalid password. Try again";
   }else{
-    $_SESSION['is_logged']=true;
+    sset('is_logged',true);
     loadcfg();
   }
 }
 
 if(isset($_REQUEST['logoff'])){
   check_xss();
-  $_SESSION=[];
+  sclear();
   savecfg();
-  session_destroy();
   $url=$self;
   if (!$ACCESS_PWD) $url='/';
   header("location: $url");
   exit;
 }
 
-if (!isset($_SESSION['is_logged'])){
+if (!sget('is_logged')){
   if (empty($ACCESS_PWD)){
       if (isTrusted()){
-        $_SESSION['is_logged']=true;
+        sset('is_logged',true);
         loadcfg();
       }else{
         die("Set ACCESS_PWD to protect your database.");
@@ -464,13 +469,13 @@ function sht(f){
 </head>
 <body onload="after_load()">
 <form method="post" name="DF" id="DF" action="<?php eo($self)?>" enctype="multipart/form-data">
-<input type="hidden" name="XSS" value="<?php eo($_SESSION['XSS'])?>">
+<input type="hidden" name="XSS" value="<?php eo(sget('XSS'))?>">
 <input type="hidden" name="refresh" value="">
 <input type="hidden" name="p" value="">
 
 <div class="inv">
 <a href="http://phpminiadmin.sourceforge.net/" target="_blank"><b>phpMiniAdmin <?php eo($VERSION)?></b></a>
-<?php if ($_SESSION['is_logged'] && $dbh){
+<?php if (sget('is_logged') && $dbh){
  if ($DBSERVERS){?>
  | Servers: <select name="srv" onChange="frefresh()"><option value=''>- select/refresh -</option>
 <?php echo @sel($DBSERVERS,'iname',$SRV)?></select>
@@ -486,7 +491,7 @@ function sht(f){
 <?php } ?>
  | <a href="?showcfg=1">Settings</a>
 <?php } ?>
-<?php if ($_SESSION['is_logged']){?> | <a href="?<?php eo($xurl)?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
+<?php if (sget('is_logged')){?> | <a href="?<?php eo($xurl)?>&logoff=1" onclick="logoff()">Logoff</a> <?php }?>
  | <a href="?pi=1">phpinfo</a>
 </div>
 
@@ -674,8 +679,8 @@ function get_identity($dbh1=NULL){
 
 function get_db_select($sel=''){
  global $DB,$SHOW_D;
- if (is_array($_SESSION['sql_sd']??0) && ($_REQUEST['db']??'')!='*'){//check cache
-    $arr=$_SESSION['sql_sd'];
+ $arr=sget('sql_sd');
+ if (is_array($arr) && ($_REQUEST['db']??'')!='*'){
  }else{
    $arr=db_array($SHOW_D,NULL,1);
    if (!is_array($arr) || !$arr){
@@ -683,19 +688,18 @@ function get_db_select($sel=''){
       if (!$cur) $cur=$DB['db'];
       $arr=[['Database'=>$cur]];
    }
-   $_SESSION['sql_sd']=$arr;
+   sset('sql_sd',$arr);
  }
  return @sel($arr,'Database',$sel);
 }
 
 function chset_select($sel=''){
  global $DBDEF;
- if (isset($_SESSION['sql_chset'])){
-    $arr=$_SESSION['sql_chset'];
- }else{
+ $arr=sget('sql_chset');
+ if (!$arr){
    $arr=db_array("show character set",NULL,1);
    if (!is_array($arr)) $arr=[['Charset'=>$DBDEF['chset']]];
-   $_SESSION['sql_chset']=$arr;
+   sset('sql_chset',$arr);
  }
 
  return @sel($arr,'Charset',$sel);
@@ -789,8 +793,8 @@ function savecfg(){
  $v=$_REQUEST['v']??[];
  if(!is_array($v))$v=[];
  unset($v['ssl_ca']);unset($v['ssl_key']);unset($v['ssl_cert']);#don't allow override ssl paths from web
- $_SESSION['DB']=array_merge($DBDEF,$v);
- unset($_SESSION['sql_sd']);
+ sset('DB',array_merge($DBDEF,$v));
+ sdel('sql_sd');
 
  if ($_REQUEST['rmb']??0){
     $tm=time()+60*60*24*30;
@@ -820,18 +824,22 @@ function loadcfg(){
  global $DBDEF;
 
  if( isset($_COOKIE['conn']) ){
-    $_SESSION['DB']=array_merge($DBDEF,$_COOKIE['conn']);
+    sset('DB',array_merge($DBDEF,$_COOKIE['conn']));
  }else{
-    $_SESSION['DB']=$DBDEF;
+    sset('DB',$DBDEF);
  }
- if (!strlen($_SESSION['DB']['chset'])) $_SESSION['DB']['chset']=$DBDEF['chset'];#don't allow empty charset
+ $cfg=sget('DB');
+ if (!strlen($cfg['chset']??'')){
+    $cfg['chset']=$DBDEF['chset'];
+    sset('DB',$cfg);
+ }
 }
 
 //each time - from session to $DB_*
 function loadsess(){
  global $SRV,$DBSERVERS,$DB,$is_sm;
 
- $DB=$_SESSION['DB'];
+ $DB=sget('DB',[]);
  $rdb=$_REQUEST['db']??'';
  if ($rdb=='*') $rdb='';
 
@@ -850,8 +858,8 @@ function loadsess(){
  if ($rdb) {
     $DB['db']=$rdb;
  }
- if($_REQUEST['GoSQL']??'') $_SESSION['is_sm']=intval($_REQUEST['is_sm']??0);
- $is_sm=intval($_SESSION['is_sm']??0);
+ if($_REQUEST['GoSQL']??'') sset('is_sm',intval($_REQUEST['is_sm']??0));
+ $is_sm=intval(sget('is_sm'));
 }
 
 function print_export(){
@@ -1284,8 +1292,8 @@ function get_rand_str($len){
 
 function check_xss(){
  global $self;
- if ($_SESSION['XSS']!=trim($_REQUEST['XSS'])){
-    unset($_SESSION['XSS']);
+ if (sget('XSS')!=trim($_REQUEST['XSS'])){
+    sdel('XSS');
     header("location: $self");
     exit;
  }

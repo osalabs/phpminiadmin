@@ -42,6 +42,7 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 ### changes in phpMiniAdmin 1.9.251125 (latest)
 - reverted back from str_starts_with to strpos to support PHP 7
 - fix if does not have permission to run SHOW DATABASES
+- moved work with session under $_SESSION['phpMiniAdmin'], so it does not conflict with other applications sessions
 
 ### changes in phpMiniAdmin 1.9.240801
 - fixed one php short open tag
