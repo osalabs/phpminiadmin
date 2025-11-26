@@ -43,6 +43,7 @@ In the directory samples you'll find phpminiconfig.php for known OpenSource pack
 ## Change Log
 
 ### changes in phpMiniAdmin 1.9.251125 (latest)
+- enabled use of PDO by default if available with fallback to mysqli
 - reverted back from str_starts_with to strpos to support PHP 7
 - fix if does not have permission to run SHOW DATABASES
 - moved work with session under $_SESSION['phpMiniAdmin'], so it does not conflict with other applications sessions
