@@ -43,6 +43,9 @@ $SHOW_T="SHOW TABLE STATUS";
 $DB=[]; #working copy for DB settings
 $SRV='';#selected server iname
 $self=$_SERVER['PHP_SELF'];
+$dbh=null; #pdo OR mysqli connection handle
+$DBDRV=''; #db driver in use: 'pdo' or 'mysqli'
+$db_last_error='';
 
 $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
 @session_set_cookie_params(0, null, null, $secure, true);
@@ -169,7 +172,7 @@ and TABLE_SCHEMA=".dbq($DB['db']);
  }
 
  if (!do_multi_sql($q)){
-    $out_message="Error: ".mysqli_error($dbh);
+    $out_message="Error: ".db_err();
  }else{
     if ($last_sth && $last_sql){
        if($is_shts)$last_sql=$SHOW_T;
@@ -178,7 +181,7 @@ and TABLE_SCHEMA=".dbq($DB['db']);
           if ($q!=$last_sql) $out_message="Results of the last select displayed:";
           display_select($last_sth,$last_sql);
        } else {
-         $reccount=mysqli_affected_rows($dbh);
+         $reccount=db_aff_rows();
          $out_message="Done.";
          if (preg_match("/^insert|replace/i",$last_sql)) $out_message.=" Last inserted id=".get_identity();
          if (preg_match("/^drop|truncate/i",$last_sql)) do_sql($SHOW_T);
@@ -200,9 +203,9 @@ function display_select($sth,$q){
 
  if ($sth===FALSE or $sth===TRUE) return;#check if $sth is not a mysql resource
 
- $reccount=mysqli_num_rows($sth);
- $fields_num=mysqli_field_count($dbh);
-
+ $reccount=db_num_rows($sth);
+ $fields_num=db_fcount($sth);
+ $fields=db_fields($sth);
  $w='';
  if ($is_sm) $w='sm ';
  if ($is_sht || $is_shd) {$w='wa';
@@ -232,7 +235,7 @@ function display_select($sth,$q){
  if ($is_sht) $headers.="<td><input type='checkbox' name='cball' value='' onclick='chkall(this)'></td>";
  for($i=0;$i<$fields_num;$i++){
     if ($is_sht && $i>0) break;
-    $meta=mysqli_fetch_field($sth);
+    $meta=$fields[$i]??(object)['name'=>''];
     $headers.="<th><div>".hs($meta->name)."</div></th>";
  }
  if ($is_shd) $headers.="<th>show create database</th><th>show table status</th><th>show triggers</th>";
@@ -240,7 +243,7 @@ function display_select($sth,$q){
  $headers.="</tr>\n";
  $sqldr.=$headers;
  $swp=false;
- while($row=mysqli_fetch_row($sth)){
+ while($row=db_frow($sth)){
    $sqldr.="<tr class='".$rc[$swp=!$swp]."' onclick='tc(this)'>";
    $v=$row[0];
    if ($is_sht){
@@ -285,6 +288,7 @@ function display_select($sth,$q){
    $sqldr.="</tr>\n";
  }
  $sqldr.="</table></div>\n".$abtn;
++db_free($sth);
 }
 
 function print_header(){
@@ -539,7 +543,7 @@ Records: <b><?php eo($reccount); if(!is_null($last_count) && $reccount<$last_cou
 function print_footer(){
 ?>
 </form>
-<div class="ft">&copy; 2004-2024 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
+<div class="ft">&copy; 2004-2025 <a href="http://osalabs.com" target="_blank">Oleg Savchuk</a></div>
 </body></html>
 <?php
 }
@@ -589,48 +593,172 @@ function print_cfg(){
 
 //* utilities
 function db_connect($nodie=0){
- global $dbh,$DB,$err_msg,$IS_LOCAL_INFILE;
+ global $dbh,$DB,$err_msg,$IS_LOCAL_INFILE,$DBDRV;
 
- mysqli_report(MYSQLI_REPORT_OFF);
+ $dbh=null;
+ $DBDRV='mysqli';
  $po=$DB['port'];if(!$po) $po=ini_get("mysqli.default_port");
  $so=$DB['socket'];if(!$so) $so=ini_get("mysqli.default_socket");
- if ($DB['ssl_ca']){#ssl connection
-  $dbh=mysqli_init();
-  mysqli_options($dbh,MYSQLI_OPT_SSL_VERIFY_SERVER_CERT,true);
-  mysqli_ssl_set($dbh,$DB['ssl_key'],$DB['ssl_cert'],$DB['ssl_ca'],NULL,NULL);
-  if (!mysqli_real_connect($dbh,$DB['host'],$DB['user'],$DB['pwd'],$DB['db'],$po,$so,MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT)) $dbh=null;
- }else{#non-ssl
-  $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd'],$DB['db'],$po,$so);
+ if (class_exists('PDO') && in_array('mysql',PDO::getAvailableDrivers())){
+  $dsn="mysql:host={$DB['host']};dbname={$DB['db']}";
+  if ($po) $dsn.=";port=$po";
+  if ($DB['socket']) $dsn.=";unix_socket={$DB['socket']}";
+  $opt=[
+   PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
+   PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,
+   PDO::ATTR_EMULATE_PREPARES=>true,
+   PDO::MYSQL_ATTR_USE_BUFFERED_QUERY=>true,
+  ];
+  if ($DB['chset']) $opt[PDO::MYSQL_ATTR_INIT_COMMAND]="SET NAMES ".$DB['chset'];
+  if ($DB['ssl_ca']){
+   $opt[PDO::MYSQL_ATTR_SSL_CA]=$DB['ssl_ca'];
+   if ($DB['ssl_cert']) $opt[PDO::MYSQL_ATTR_SSL_CERT]=$DB['ssl_cert'];
+   if ($DB['ssl_key']) $opt[PDO::MYSQL_ATTR_SSL_KEY]=$DB['ssl_key'];
+  }
+  try{
+   $dbh=new PDO($dsn,$DB['user'],$DB['pwd'],$opt);
+   $DBDRV='pdo';
+  }catch(PDOException $e){
+   db_seterr($e->getMessage());
+   $dbh=null;
+  }
+ }
+ if (!$dbh){#try mysqli
+  mysqli_report(MYSQLI_REPORT_OFF);
+  if ($DB['ssl_ca']){
+   $dbh=mysqli_init();
+   mysqli_options($dbh,MYSQLI_OPT_SSL_VERIFY_SERVER_CERT,true);
+   mysqli_ssl_set($dbh,$DB['ssl_key'],$DB['ssl_cert'],$DB['ssl_ca'],NULL,NULL);
+   if (!mysqli_real_connect($dbh,$DB['host'],$DB['user'],$DB['pwd'],$DB['db'],$po,$so,MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT)) $dbh=null;
+  }else{#non-ssl
+   $dbh=mysqli_connect($DB['host'],$DB['user'],$DB['pwd'],$DB['db'],$po,$so);
+  }
+  $DBDRV='mysqli';
  }
  if (!$dbh) {
-    $err_msg='Cannot connect to the database because: '.mysqli_connect_error();
+    $err_msg='Cannot connect to the database because: '.(db_err()?:mysqli_connect_error());
     if (!$nodie) die($err_msg);
  }else{
-  if ($DB['chset']) db_query("SET NAMES ".$DB['chset']);
+  if ($DB['chset'] && $DBDRV==='mysqli') db_query("SET NAMES ".$DB['chset']);
   db_query("SET GLOBAL local_infile=".intval($IS_LOCAL_INFILE),NULL,1);
  }
 
  return $dbh;
 }
 
-function db_checkconnect($dbh1=NULL, $skiperr=0){
+function isPDO(){
+ global $DBDRV;
+ return $DBDRV==='pdo';
+}
+
+function db_seterr($msg){
+ global $db_last_error;
+ return $db_last_error=$msg;
+}
+
+function db_err(){
+ global $dbh,$db_last_error;
+ if (isPDO()) return $db_last_error;
+ if ($dbh) return mysqli_error($dbh);
+ return $db_last_error;
+}
+
+function db_aff_rows(){
+ global $dbh,$last_sth;
+ if (isPDO()){
+  return $last_sth?$last_sth->rowCount():0;
+ }
+ if ($dbh){
+  return mysqli_affected_rows($dbh);
+ }
+ return 0;
+}
+
+function db_num_rows($sth){
+ if (!$sth) return 0;
+ if (isPDO()){
+  return $sth->rowCount();
+ }
+ return mysqli_num_rows($sth);
+}
+
+function db_fcount($sth=NULL){
+ global $dbh,$last_sth;
+ if (isPDO()){
+  $stmt=$sth?:$last_sth;
+  return $stmt?($stmt->columnCount()?:0):0;
+ }
+ if ($sth){
+  return mysqli_num_fields($sth);
+ }
+ if ($dbh){
+  return mysqli_field_count($dbh);
+ }
+ return 0;
+}
+
+function db_fields($sth){
+ if (isPDO()){
+  if (!$sth) return [];
+  $res=[];
+  $cnt=$sth->columnCount();
+  for($i=0;$i<$cnt;$i++){
+   $meta=$sth->getColumnMeta($i);
+   $res[]=(object)['name'=>$meta['name']??$i];
+  }
+  return $res;
+ }
+ return $sth?mysqli_fetch_fields($sth):[];
+}
+
+function db_frow($sth){
+ if (isPDO()){
+  return $sth?$sth->fetch(PDO::FETCH_NUM):false;
+ }
+ return mysqli_fetch_row($sth);
+}
+
+function db_fassoc($sth){
+ if (isPDO()){
+  return $sth?$sth->fetch(PDO::FETCH_ASSOC):false;
+ }
+ return mysqli_fetch_assoc($sth);
+}
+
+function db_free($sth){
+ if (!$sth) return;
+ if (isPDO()){
+  $sth->closeCursor();
+ }else{
+  mysqli_free_result($sth);
+ }
+}
+
+function db_checkconnect($dbh1=NULL,$skiperr=0){
  global $dbh;
+ if (isPDO()) return $dbh;
  if (!$dbh1) $dbh1=&$dbh;
- if (!$dbh1 or !mysqli_ping($dbh1)) {
-    db_connect($skiperr);
-    $dbh1=&$dbh;
+ if (!$dbh1 or !mysqli_ping($dbh1)){
+  db_connect($skiperr);
+  $dbh1=&$dbh;
  }
  return $dbh1;
 }
 
 function db_disconnect(){
  global $dbh;
- mysqli_close($dbh);
+ if(!isPDO()&&$dbh){
+  mysqli_close($dbh);
+ }
+ $dbh=null;
 }
 
 function dbq($s){
  global $dbh;
  if (is_null($s)) return "NULL";
+ if (isPDO()){
+  return $dbh->quote($s);
+ }
  return "'".mysqli_real_escape_string($dbh,$s)."'";
 }
 
@@ -639,40 +767,68 @@ function dbqid($s){
  return "`$s`";
 }
 
-function db_query($sql, $dbh1=NULL, $skiperr=0, $resmod=MYSQLI_STORE_RESULT){
- $dbh1=db_checkconnect($dbh1, $skiperr);
- if($dbh1) $sth=mysqli_query($dbh1, $sql, $resmod);
+function db_query($sql,$dbh1=NULL,$skiperr=0,$resmod=MYSQLI_STORE_RESULT){
+ global $dbh,$last_sth;
+ if (isPDO()){
+  if (!$dbh){
+   if ($skiperr) return;
+   die("Error in DB operation:<br>\nNo PDO connection<br>\n$sql");
+  }
+  try{
+   $sth=$dbh->query($sql);
+  }catch(PDOException $e){
+   $msg=db_seterr($e->getMessage());
+   if ($skiperr) return;
+   die("Error in DB operation:<br>\n".$msg."<br>\n$sql");
+  }
+  $last_sth=$sth;
+  return $sth;
+ }
+ $dbh1=db_checkconnect($dbh1,$skiperr);
+ $sth=false;
+ if($dbh1) $sth=mysqli_query($dbh1,$sql,$resmod);
  if(!$sth && $skiperr) return;
  if(!$sth) die("Error in DB operation:<br>\n".mysqli_error($dbh1)."<br>\n$sql");
+ $last_sth=$sth;
  return $sth;
 }
 
-function db_array($sql, $dbh1=NULL, $skiperr=0, $isnum=0){#array of rows
- $sth=db_query($sql, $dbh1, $skiperr, MYSQLI_USE_RESULT);
+function db_array($sql,$dbh1=NULL,$skiperr=0,$isnum=0){#array of rows
+ $sth=db_query($sql,$dbh1,$skiperr,isPDO()?0:MYSQLI_USE_RESULT);
  if (!$sth) return;
  $res=[];
- if ($isnum){
-   while($row=mysqli_fetch_row($sth)) $res[]=$row;
- }else{
-   while($row=mysqli_fetch_assoc($sth)) $res[]=$row;
+ if (isPDO()){
+  $mode=$isnum?PDO::FETCH_NUM:PDO::FETCH_ASSOC;
+  while($row=$sth->fetch($mode)) $res[]=$row;
+  db_free($sth);
+  return $res;
  }
- mysqli_free_result($sth);
+ if ($isnum){
+  while($row=mysqli_fetch_row($sth)) $res[]=$row;
+ }else{
+  while($row=mysqli_fetch_assoc($sth)) $res[]=$row;
+ }
+ db_free($sth);
  return $res;
 }
 
 function db_row($sql){
  $sth=db_query($sql);
- return mysqli_fetch_assoc($sth);
+ if (!$sth) return;
+ $row=db_fassoc($sth);
+ return $row;
 }
 
 function db_value($sql,$dbh1=NULL,$skiperr=0){
  $sth=db_query($sql,$dbh1,$skiperr);
  if (!$sth) return;
- $row=mysqli_fetch_row($sth);
- return $row[0];
+ $row=db_frow($sth);
+ return $row[0]??null;
 }
 
 function get_identity($dbh1=NULL){
+ global $dbh;
+ if (isPDO()) return $dbh?$dbh->lastInsertId():0;
  $dbh1=db_checkconnect($dbh1);
  return mysqli_insert_id($dbh1);
 }
@@ -864,7 +1020,7 @@ function loadsess(){
 
 function print_export(){
  global $self,$xurl,$SRV,$DB,$DUMP_FILE;
- $t=$_REQUEST['rt'];
+ $t=$_REQUEST['rt']??'';
  $l=($t)?"Table $t":"whole DB";
  print_header();
 ?>
@@ -928,24 +1084,25 @@ function do_export(){
   if (strpos($DB['chset']??'','utf8')===0) ex_w($BOM);
 
   $sth=db_query("select * from ".dbqid($t[0]),NULL,0,MYSQLI_USE_RESULT);
-  $fn=mysqli_field_count($dbh);
+  $fn=db_fcount($sth);
+  $fields=db_fields($sth);
   for($i=0;$i<$fn;$i++){
-   $m=mysqli_fetch_field($sth);
+   $m=$fields[$i]??(object)['name'=>''];
    ex_w(qstr($m->name).(($i<$fn-1)?",":""));
   }
   ex_w($D);
-  while($row=mysqli_fetch_row($sth)) ex_w(to_csv_row($row));
-  mysqli_free_result($sth);
+  while($row=db_frow($sth)) ex_w(to_csv_row($row));
+  db_free($sth);
  }else{
   ex_start('.sql');
-  ex_hdr($ctp?$ctp:'text/plain',$DB['db'].(($ct==1&&$t[0])?".$t[0]":(($ct>1)?'.'.$ct.'tables':'')).".sql$aext");
+  ex_hdr($ctp?$ctp:'text/plain',$DB['db'].(($ct==1&&$t[0])?".$t[0]":(($ct>1)?'.'.$ct.'tables':'')) . ".sql$aext");
   ex_w("-- phpMiniAdmin dump $VERSION$D-- Datetime: ".date('Y-m-d H:i:s')."$D-- Host: {$DB['host']}$D-- Database: {$DB['db']}$D$D");
   if ($DB['chset']) ex_w("/*!40030 SET NAMES {$DB['chset']} */;$D");
   $ex_super && ex_w("/*!40030 SET GLOBAL max_allowed_packet=16777216 */;$D$D");
   ex_w("/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;$D$D");
 
   $sth=db_query("show full tables from ".dbqid($DB['db']));
-  while($row=mysqli_fetch_row($sth)){
+  while($row=db_frow($sth)){
     if (!$rt||array_key_exists($row[0],$th)) do_export_table($row[0],$row[1],$MAXI);
   }
 
@@ -964,7 +1121,7 @@ function do_export_table($t='',$tt='',$MAXI=838860){
 
  if($_REQUEST['s']??0){
   $sth=db_query("show create table $qt");
-  $row=mysqli_fetch_row($sth);
+  $row=db_frow($sth);
   $ct=preg_replace("/\n\r|\r\n|\n|\r/",$D,$row[1]);
   ex_w("DROP TABLE IF EXISTS $qt;$D$ct;$D$D");
  }
@@ -973,17 +1130,17 @@ function do_export_table($t='',$tt='',$MAXI=838860){
   $exsql='';
   ex_w("/*!40000 ALTER TABLE $qt DISABLE KEYS */;$D");
   $sth=db_query("select * from $qt",NULL,0,MYSQLI_USE_RESULT);
-  while($row=mysqli_fetch_row($sth)){
-    $values='';
-    foreach($row as $v) $values.=(($values)?',':'').dbq($v);
-    $exsql.=(($exsql)?',':'')."(".$values.")";
-    if (strlen($exsql)>$MAXI) {
-       ex_w("INSERT INTO $qt VALUES $exsql;$D");$exsql='';
-    }
-  }
-  mysqli_free_result($sth);
-  if ($exsql) ex_w("INSERT INTO $qt VALUES $exsql;$D");
-  ex_w("/*!40000 ALTER TABLE $qt ENABLE KEYS */;$D$D");
+  while($row=db_frow($sth)){
+     $values='';
+     foreach($row as $v) $values.=(($values)?',':'').dbq($v);
+     $exsql.=(($exsql)?',':'')."(".$values.")";
+     if (strlen($exsql)>$MAXI) {
+        ex_w("INSERT INTO $qt VALUES $exsql;$D");$exsql='';
+     }
+   }
+  db_free($sth);
+   if ($exsql) ex_w("INSERT INTO $qt VALUES $exsql;$D");
+   ex_w("/*!40000 ALTER TABLE $qt ENABLE KEYS */;$D$D");
  }
  if (!$ex_issrv) flush();
 }
@@ -1012,9 +1169,9 @@ function ex_w($s){
  }else{
     if ($ex_issrv){
         fwrite($ex_f,$s);
-    }else{
+     }else{
         echo $s;
-    }
+     }
  }
 }
 function ex_end(){
@@ -1106,13 +1263,13 @@ function do_import(){
      }else{$err_msg='Error opening gz file';}
   }
   if (!$err_msg){
-   if (!do_multi_sql('', $filename)){
-      $err_msg='Import Error: '.mysqli_error($dbh);
-   }else{
-      $out_message='Import done successfully';
-      do_sql($SHOW_T);
-      return;
-  }}
+    if (!do_multi_sql('', $filename)){
+      $err_msg='Import Error: '.db_err();
+    }else{
+       $out_message='Import done successfully';
+       do_sql($SHOW_T);
+       return;
+   }}
 
  }else{
     $err_msg="Error: Please select file first";
