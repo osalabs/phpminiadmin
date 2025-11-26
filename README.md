@@ -11,10 +11,13 @@
 **Recommended:** For additional security you may edit phpminiadmin.php file and set some password (see `$ACCESS_PWD` variable)
 
 ### Dependencies
-The only required php extension is `mysqli`. Therefore if you got a white screen install it:
+phpminiadmin prefers PDO if the `pdo_mysql` driver is present. 
 
-`sudo apt-get install php-mysql` on Debian
-or enable `extension=php_mysqli.dll` in php.ini on Windows
+Otherwise, if PDO is not available - `mysqli` must be enabled. 
+If you encounter a white screen install/enable it:
+  - `sudo apt-get install php-mysql` on Debian
+  - or enable `extension=php_mysqli.dll` in php.ini on Windows
+  - restart your webserver
 
 ## Config file (optional)
 
